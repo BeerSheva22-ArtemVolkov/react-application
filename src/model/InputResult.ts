@@ -1,5 +1,7 @@
+import { StatusType } from "./StatusType"
+
 type InputResult = {
-    status: 'error' | 'success' | 'warning'
+    status: StatusType
     message?: string
 }
 

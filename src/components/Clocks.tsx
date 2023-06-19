@@ -6,16 +6,20 @@ import InputResult from "../model/InputResult";
 import timeZones from "../data/time-zones"
 import { log, time } from "console";
 import startCountries from "../data/startCountries.json"
+import '../App.css'
 
 const Clocks: React.FC = () => {
 
     const [time, setTime] = useState<Date>(new Date()) //задает начальное значение time
 
     useEffect(() => {
+        console.log('mounting of clocks');
         const intervalID = setInterval(() => {
             setTime(new Date())
+            console.log("intrval");
         }, 1000);
         return () => {
+            console.log('unmounting of clocks');
             clearInterval(intervalID)
         }
     }, []) // пустой массив - нет зависимостей
@@ -25,10 +29,6 @@ const Clocks: React.FC = () => {
             {startCountries.map((x, index) => {
                 return (<Clock time={time} cityCountry={x.city} key={index} />)
             })}
-            {/* <Input submitFn={submitFn} placeholder={"select"} buttonTitle={"Sumbit"} />
-            <Clock time={time} cityCountry={timeZone} />
-            <Input submitFn={submitFn} placeholder={"select"} buttonTitle={"Sumbit"} />
-            <Clock time={time} cityCountry={timeZone} /> */}
         </div>
     )
 }

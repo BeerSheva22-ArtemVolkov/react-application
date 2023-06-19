@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react"
 import InputResult from "../../model/InputResult"
+import Alert from "./Alert"
+import { StatusType } from "../../model/StatusType"
+import "./Input.css"
 
 type Props = {
     submitFn: (inputText: string) => InputResult
@@ -12,13 +15,17 @@ const Input: React.FC<Props> = ({ submitFn, placeholder, buttonTitle, type }) =>
 
     const inputElementRef = useRef<HTMLInputElement>(null) // получаю ссылку на элемент
     const [disabled, setDisabled] = useState<boolean>(true)
-    const [showMessage, setShowMessage] = useState<boolean>()
-    const [status, setStatus] = useState<InputResult>()
+    const [message, setMessage] = useState<string>('');
+    const status = useRef<StatusType>("success")
 
     function onClickFn() {
-        setStatus(submitFn(inputElementRef.current!.value));
-        setShowMessage(true)
-        setTimeout(() => setShowMessage(false), 1000)
+        const res = submitFn(inputElementRef.current!.value)
+        status.current = res.status;
+        if (res.status === "success"){
+            inputElementRef.current!.value = ''
+        }
+        setMessage(res.message || '');
+        setTimeout(() => setMessage(''), 1000)
     }
 
     function onChangeFn() {
@@ -35,11 +42,12 @@ const Input: React.FC<Props> = ({ submitFn, placeholder, buttonTitle, type }) =>
                     onChange={onChangeFn}
                 />
                 <button
+                    className="app-class"
                     onClick={onClickFn}
                     disabled={disabled}
                 >{buttonTitle || 'GO'}</button>
             </div>
-            {showMessage && <label style={{backgroundColor: status?.status == "error" ? "red" : status?.status == "warning" ? "yellow" : "green"}}>{status?.message}</label>}
+            {message && <Alert status={status.current} message={message} />}
         </>
     )
 }
