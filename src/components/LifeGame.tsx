@@ -3,7 +3,7 @@ import LifeMatrix from "../service/LifeMatrix"
 import Matrix from "./Matrix"
 import { getRandomMatrix } from "../util/random";
 import lifeConfig from "../config/live-game-config.json"
-// const { demension, tick, example4 } = lifeConfig;
+const { dimension, tick } = lifeConfig;
 
 const LifeGame: React.FC = () => {
 
@@ -12,8 +12,8 @@ const LifeGame: React.FC = () => {
 
     function tickFn(): void {
         if (!lifeMatrix.current) {
-            // lifeMatrix.current = new LifeMatrix(getRandomMatrix(demension, demension, 0, 2))
-            lifeMatrix.current = new LifeMatrix(lifeConfig.example4)
+            lifeMatrix.current = new LifeMatrix(getRandomMatrix(dimension, dimension, 0, 2))
+            // lifeMatrix.current = new LifeMatrix(lifeConfig.example2)
             setNumbers(lifeMatrix.current.numbers)
         } else {
             setNumbers(lifeMatrix.current.next())

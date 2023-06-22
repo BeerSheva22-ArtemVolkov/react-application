@@ -25,7 +25,7 @@ const Input: React.FC<Props> = ({ submitFn, placeholder, buttonTitle, type }) =>
             inputElementRef.current!.value = ''
         }
         setMessage(res.message || '');
-        setTimeout(() => setMessage(''), 1000)
+        setTimeout(() => setMessage(''), 2000)
     }
 
     function onChangeFn() {
