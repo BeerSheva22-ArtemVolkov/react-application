@@ -10,6 +10,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     window.addEventListener('resize', () => {
+      // dispatch - применение (выполнение) события
       dispatch(sizeActions.setSize()) // место где отслеживается изменение
       dispatch(directionActions.setDirection())
     })
