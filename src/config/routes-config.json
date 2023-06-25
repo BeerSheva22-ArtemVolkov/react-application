@@ -1,0 +1,9 @@
+{
+    "always": [{"to": "/", "label": "Home"}],
+    "authenticated": [{"to": "/signout", "label": "Sign Out"},
+     {"to": "/products", "label": "Products"}],
+     "admin": [{"to": "/orders", "label": "Orders"},
+     {"to": "/customers", "label": "Customers"}],
+     "noadmin": [{"to": "/shoppingcart", "label": "Shopping Cart"}],
+     "noauthenticated": [{"to": "/signin", "label": "Sign In"}]
+}
