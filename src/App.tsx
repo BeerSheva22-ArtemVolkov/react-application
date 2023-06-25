@@ -14,6 +14,8 @@ import './App.css'
 import { useSelectorAuth } from "./components/redux/store";
 import { useMemo } from "react";
 import routesConfig from './config/routes-config.json';
+import NotFound from "./components/pages/NotFound";
+
 const { always, authenticated, admin, noadmin, noauthenticated } = routesConfig;
 function getRoutes(username: string): RouteType[] {
   const res: RouteType[] = [];
@@ -28,7 +30,7 @@ function getRoutes(username: string): RouteType[] {
 const App: React.FC = () => {
 
   const userName = useSelectorAuth();
-  const routes = useMemo(() => getRoutes(userName), [userName]) // вызывается в момент рендеринга
+  const routes = useMemo(() => getRoutes(userName), [userName]) // вызывается в момент рендеринга и не вызовется при повторном перерендеринге, если не изменился userName
 
   // BrowserRouter - это реализация маршрутизатора, для синхронизации пользовательского интерфейса с URL. Это родительский компонент, используемый для хранения всех других компонентов.
   return <BrowserRouter>
@@ -45,6 +47,7 @@ const App: React.FC = () => {
         <Route path="shoppingcart" element={<ShoppingCart />} />
         <Route path="signin" element={<SignIn />} />
         <Route path="signout" element={<SignOut />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
 

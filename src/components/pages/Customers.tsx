@@ -9,11 +9,10 @@ const Customers: React.FC = () => {
     const context:test = useOutletContext();
 
     return (<>
-        <p className="component-logo">Customers component {context.name}</p>
+        <p className="component-logo">Customers component</p>
         <nav>
             <ul className="navigator-list">
                 <li className="navigator-item">
-                    {/* NavLink определяет активную вкладку */}
                     <NavLink to="test">Test</NavLink>
                 </li>
             </ul>
