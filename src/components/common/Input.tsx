@@ -3,6 +3,7 @@ import InputResult from "../../model/InputResult"
 import Alert from "./Alert"
 import { StatusType } from "../../model/StatusType"
 import "./Input.css"
+import { Button, TextField } from "@mui/material"
 
 type Props = {
     submitFn: (inputText: string) => InputResult
@@ -13,39 +14,43 @@ type Props = {
 
 const Input: React.FC<Props> = ({ submitFn, placeholder, buttonTitle, type }) => {
 
-    const inputElementRef = useRef<HTMLInputElement>(null) // получаю ссылку на элемент
+    // const inputElementRef = useRef<HTMLInputElement>(null) // получаю ссылку на элемент
+    const inputElementRef = useRef<any>(null)
     const [disabled, setDisabled] = useState<boolean>(true)
     const [message, setMessage] = useState<string>('');
     const status = useRef<StatusType>("success")
 
-    function onClickFn() {
+    function onClickFn(event: any) {
         const res = submitFn(inputElementRef.current!.value)
         status.current = res.status;
         if (res.status === "success"){
             inputElementRef.current!.value = ''
         }
         setMessage(res.message || '');
-        setTimeout(() => setMessage(''), 2000)
+        setTimeout(() => setMessage(''), 5000)
     }
 
-    function onChangeFn() {
-        setDisabled(!inputElementRef.current?.value)
+    function onChangeFn(event: any) {
+        // console.log(event.target.nodeValue);
+        inputElementRef.current = event.target as any
+        // setDisabled(!inputElementRef.current?.value)
+        setDisabled(!event.traget.value)
     }
 
     return (
         <>
             <div>
-                <input
+                <TextField
+                    size="small"
                     type={type || 'text'}
                     placeholder={placeholder}
                     ref={inputElementRef}
                     onChange={onChangeFn}
                 />
-                <button
-                    className="app-class"
+                <Button
                     onClick={onClickFn}
                     disabled={disabled}
-                >{buttonTitle || 'GO'}</button>
+                >{buttonTitle || 'GO'}</Button>
             </div>
             {message && <Alert status={status.current} message={message} />}
         </>
