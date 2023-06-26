@@ -7,6 +7,7 @@ export const store = configureStore({
         authState: authReducer
     }
 });
+
 export function useSelectorAuth() {
     return useSelector<any, string>(state => state.authState.username);
 }

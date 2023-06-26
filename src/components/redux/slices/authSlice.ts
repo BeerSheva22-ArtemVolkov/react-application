@@ -16,8 +16,7 @@ const authSlice = createSlice({
             state.username = ''
             localStorage.removeItem(AUTH_ITEM)
         }
-
     }
 })
-export const authActions = authSlice.actions
-export const authReducer = authSlice.reducer
+export const authActions = authSlice.actions // чтобы менять
+export const authReducer = authSlice.reducer // чтобы брать
