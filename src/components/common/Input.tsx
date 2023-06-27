@@ -33,8 +33,8 @@ const Input: React.FC<Props> = ({ submitFn, placeholder, buttonTitle, type }) =>
     function onChangeFn(event: any) {
         // console.log(event.target.nodeValue);
         inputElementRef.current = event.target as any
-        // setDisabled(!inputElementRef.current?.value)
-        setDisabled(!event.traget.value)
+        setDisabled(!inputElementRef.current?.value)
+        // setDisabled(!event.traget.value)
     }
 
     return (

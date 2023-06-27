@@ -1,7 +1,5 @@
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { BrowserRouter, NavLink, Route, Routes } from "react-router-dom";
-import Navigator, { RouteType } from "./components/navigators/Navigator";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { RouteType } from "./components/navigators/Navigator";
 import Home from "./components/pages/Home";
 import Customers from "./components/pages/Customers";
 import Orders from "./components/pages/Orders";
@@ -15,6 +13,7 @@ import { useSelectorAuth } from "./components/redux/store";
 import { useMemo } from "react";
 import routesConfig from './config/routes-config.json';
 import NotFound from "./components/pages/NotFound";
+import NavigatorDispathcer from "./components/navigators/NavigatorDispatcher";
 
 const { always, authenticated, admin, noadmin, noauthenticated } = routesConfig;
 function getRoutes(username: string): RouteType[] {
@@ -36,7 +35,7 @@ const App: React.FC = () => {
   return <BrowserRouter>
     <Routes>
       {/* Route - это условно отображаемый компонент, который предоставляет пользовательский интерфейс, когда его путь совпадает с текущим URL. */}
-      <Route path="/" element={<Navigator routes={routes} />}>
+      <Route path="/" element={<NavigatorDispathcer routes={routes} />}>
         {/* index - основной подмаршрут */}
         <Route index element={<Home />} />
         <Route path="customers" element={<Customers />} >
