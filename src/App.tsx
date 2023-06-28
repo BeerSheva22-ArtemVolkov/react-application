@@ -17,21 +17,29 @@ import NavigatorDispathcer from "./components/navigators/NavigatorDispatcher";
 import UserData from "./model/UserData";
 
 const { always, authenticated, admin, noadmin, noauthenticated } = routesConfig;
-function getRoutes(user: UserData): RouteType[] {
+function getRoutes(userData: UserData): RouteType[] {
   const res: RouteType[] = [];
   res.push(...always);
-  user && res.push(...authenticated);
-  user && user.role.startsWith('admin') && res.push(...admin);
-  user && user.email && !user.role.startsWith('admin') && res.push(...noadmin);
-  !user && res.push(...noauthenticated);
+
+  if (userData) {
+    res.push(...authenticated)
+    if (userData.role === 'admin') {
+      res.push(...admin);
+    } else {
+      res.push(...noadmin);
+    }
+  } else {
+    res.push(...noauthenticated);
+  }
+
   return res;
 }
 
 const App: React.FC = () => {
 
-  const user: UserData | null = useSelectorAuth();
-  
-  const routes = useMemo(() => getRoutes(user), [user])
+  const userData: UserData = useSelectorAuth();
+
+  const routes = useMemo(() => getRoutes(userData), [userData])
 
   // BrowserRouter - это реализация маршрутизатора, для синхронизации пользовательского интерфейса с URL. Это родительский компонент, используемый для хранения всех других компонентов.
   return <BrowserRouter>

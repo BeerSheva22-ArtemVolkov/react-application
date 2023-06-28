@@ -1,38 +1,36 @@
 // TODO - form based on the Material UI template
 
-import { Container, CssBaseline, Box, Typography, TextField, FormControlLabel, Checkbox, Button, Grid } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Container, CssBaseline, Box, Typography, TextField, Button, Snackbar, Alert } from "@mui/material";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import InputResult from "../../model/InputResult";
-import UserData from "../../model/UserData";
-import Alert from "../common/Alert";
 import { useRef, useState } from "react";
 import { StatusType } from "../../model/StatusType";
-import { useDispatch } from "react-redux";
-import { authActions } from "../redux/slices/authSlice";
+import LoginData from "../../model/LoginData";
 
 const defaultTheme = createTheme();
 
 type Props = {
-    submitFn: (email: string, password: string) => Promise<InputResult>
+    submitFn: (loginData: LoginData) => Promise<InputResult>
 }
 
 const SignInForm: React.FC<Props> = ({ submitFn }) => {
 
-    const dispatch = useDispatch();
-    const [message, setMessage] = useState<string>('');
+    const message = useRef<string>('')
+    const [open, setOpen] = useState<boolean>(false)
     const status = useRef<StatusType>("success")
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
         const data = new FormData(event.currentTarget);
-        const email: string = data.get('email')!.toString();
-        const password: string = data.get('password')!.toString();
-        const res = await submitFn(email, password);
-        
-        if (res.status == "success") {
-            dispatch(authActions.set(res.message))
-        }
+        const email: string = data.get('email')! as string;
+        const password: string = data.get('password')! as string;
+        const result = await submitFn({ email, password });
+
+        message.current = result.message!;
+        status.current = result.status;
+        message.current && setOpen(true)
+        setTimeout(() => setOpen(false), 5000)
     };
 
     return (
@@ -79,8 +77,10 @@ const SignInForm: React.FC<Props> = ({ submitFn }) => {
                         >
                             Sign In
                         </Button>
-                        {message && <Alert status={status.current} message={message} />}
                     </Box>
+                    <Snackbar open={open} transitionDuration={1000} >
+                        <Alert onClose={() => setOpen(false)} severity={status.current}>{message.current}</Alert>
+                    </Snackbar>
                 </Box>
             </Container>
         </ThemeProvider>

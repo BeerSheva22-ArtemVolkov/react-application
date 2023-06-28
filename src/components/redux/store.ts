@@ -10,5 +10,5 @@ export const store = configureStore({
 });
 
 export function useSelectorAuth() {        
-    return useSelector<any, UserData>(state => state.authState);
+    return useSelector<any, UserData>(state => state.authState.userData);
 }

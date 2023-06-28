@@ -1,8 +1,8 @@
+import LoginData from "../model/LoginData";
 import UserData from "../model/UserData";
 
 export default interface AuthService {
-    // все возвращают promise
-    // login(loginData: { email: string, password: string }): Promise<UserData | null>
-    login(loginData: { email: string, password: string }): Promise<string | null>
+    [x: string]: any;
+    login(loginData: LoginData): Promise<UserData>
     logut(): Promise<void>
 }

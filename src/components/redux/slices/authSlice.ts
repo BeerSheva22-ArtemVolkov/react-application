@@ -2,36 +2,27 @@ import { createSlice } from '@reduxjs/toolkit';
 import UserData from '../../../model/UserData';
 const AUTH_ITEM = "auth-item"
 
-function getUserData(storageValue: string | null): UserData | null {
-    let email: string = ''
-    let role: string = ''
-
-    if (storageValue) {
-        const payloadJson = atob(storageValue!.split('.')[1])
-        const userData = JSON.parse(payloadJson);
-        email = userData.email;
-        role = userData.sub;
-        return { email, role }
-    } else {
-        return null
-    }
+function getUserData(): UserData {
+    const userDataJson = localStorage.getItem(AUTH_ITEM) || '';
+    return userDataJson ? JSON.parse(userDataJson) : null
 }
 
-const initialState: UserData | null = getUserData(localStorage.getItem(AUTH_ITEM)) ? {email: getUserData(localStorage.getItem(AUTH_ITEM))!.email,
-    role: getUserData(localStorage.getItem(AUTH_ITEM))!.role} : null
+const initialState: {userData: UserData} = {
+    userData: getUserData()
+}
 
 const authSlice = createSlice({
     initialState,
     name: "authState",
     reducers: {
         set: (state, data) => {
-            console.log(data);
-            
-            state = getUserData(data.payload)
-            localStorage.setItem(AUTH_ITEM, data.payload)
+            if (data.payload){
+                localStorage.setItem(AUTH_ITEM, JSON.stringify(data.payload))
+                state.userData = data.payload
+            }
         },
-        reset: (state: UserData | null) => {
-            state = null
+        reset: (state) => {
+            state.userData = null
             localStorage.removeItem(AUTH_ITEM)
         }
     }
