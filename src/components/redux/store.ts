@@ -9,5 +9,7 @@ export const store = configureStore({
 });
 
 export function useSelectorAuth() {
+    console.log('auth');
+    
     return useSelector<any, string>(state => state.authState.username);
 }

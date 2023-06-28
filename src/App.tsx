@@ -18,6 +18,8 @@ import NotFound from "./components/pages/NotFound";
 
 const { always, authenticated, admin, noadmin, noauthenticated } = routesConfig;
 function getRoutes(username: string): RouteType[] {
+  console.log('remder routes');
+  
   const res: RouteType[] = [];
   res.push(...always);
   username && res.push(...authenticated);
