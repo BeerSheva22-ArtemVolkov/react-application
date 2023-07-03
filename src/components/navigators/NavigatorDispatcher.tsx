@@ -6,7 +6,7 @@ import NavigatorPortrait from "./NavigatorPortrait";
 
 const NavigatorDispathcer: React.FC<{routes: RouteType[]}> = ({routes}) => {
     const theme = useTheme();
-    const isPortrait = useMediaQuery(theme.breakpoints.down('sm'));
+    const isPortrait = useMediaQuery(theme.breakpoints.down('md'));
     return !isPortrait ? <Navigator routes={routes}/> : <NavigatorPortrait routes={routes}/>
 }
 

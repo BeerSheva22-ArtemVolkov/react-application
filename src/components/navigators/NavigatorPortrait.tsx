@@ -3,7 +3,7 @@ import { RouteType } from "./Navigator";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import MenuIcon from '@mui/icons-material/Menu';
 import { useEffect, useState } from "react";
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import CloseIcon from '@mui/icons-material/Close';
 import { NavLink } from "react-router-dom";
 
 const NavigatorPortrait: React.FC<{ routes: RouteType[] }> = ({ routes }) => {
@@ -59,7 +59,7 @@ const NavigatorPortrait: React.FC<{ routes: RouteType[] }> = ({ routes }) => {
             open={open}
         >
             <IconButton onClick={handleDrawerClose}>
-                <ChevronRightIcon />
+                <CloseIcon />
             </IconButton>
             <List>
                 {routes.map(route => (

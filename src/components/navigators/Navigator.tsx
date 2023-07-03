@@ -1,10 +1,12 @@
-import { AppBar, Link, Tab, Tabs  } from '@mui/material'
+import { AppBar, Link, Tab, Tabs } from '@mui/material'
 import { Box } from '@mui/system'
 import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+
 export type RouteType = {
     to: string, label: string
 }
+
 const Navigator: React.FC<{ routes: RouteType[] }> = ({ routes }) => {
 
     const navigate = useNavigate() // используется для изменения состояние активного раута (похож на диспатч). 
@@ -26,13 +28,13 @@ const Navigator: React.FC<{ routes: RouteType[] }> = ({ routes }) => {
     }
 
     function getTabs(): ReactNode {
-        return routes.map(route => <Tab component={NavLink} to={route.to} label={route.label} key={route.label}/>)
+        return routes.map(route => <Tab component={NavLink} to={route.to} label={route.label} key={route.label} />)
     }
 
     return <Box mt={10}>
         {/* sx - style extended? */}
-        <AppBar sx={{backgroundColor: 'lightgray'}}> 
-            <Tabs value={value} onChange={onChangeFn}>
+        <AppBar sx={{ backgroundColor: 'lightgray' }}>
+            <Tabs value={value < routes.length ? value : 0} onChange={onChangeFn}>
                 {getTabs()}
             </Tabs>
         </AppBar>

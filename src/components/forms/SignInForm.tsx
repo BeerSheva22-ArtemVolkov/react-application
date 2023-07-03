@@ -1,13 +1,15 @@
-// TODO - form based on the Material UI template
-
 import { Container, CssBaseline, Box, Typography, TextField, Button, Snackbar, Alert } from "@mui/material";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import InputResult from "../../model/InputResult";
 import { useRef, useState } from "react";
 import { StatusType } from "../../model/StatusType";
 import LoginData from "../../model/LoginData";
+import { useDispatch } from "react-redux";
+import { codeActions } from "../redux/slices/codeSlice";
+import CodeType from "../../model/CodeType";
 
 const defaultTheme = createTheme();
+
 
 type Props = {
     submitFn: (loginData: LoginData) => Promise<InputResult>
@@ -16,8 +18,9 @@ type Props = {
 const SignInForm: React.FC<Props> = ({ submitFn }) => {
 
     const message = useRef<string>('')
-    const [open, setOpen] = useState<boolean>(false)
+    // const [open, setOpen] = useState<boolean>(false)
     const status = useRef<StatusType>("success")
+    const dispatch = useDispatch()
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -25,12 +28,12 @@ const SignInForm: React.FC<Props> = ({ submitFn }) => {
         const data = new FormData(event.currentTarget);
         const email: string = data.get('email')! as string;
         const password: string = data.get('password')! as string;
-        const result = await submitFn({ email, password });
-
-        message.current = result.message!;
-        status.current = result.status;
-        message.current && setOpen(true)
-        setTimeout(() => setOpen(false), 5000)
+        const result = await submitFn({ email, password });        
+        // message.current = result.message!;
+        // status.current = result.status;
+        dispatch(codeActions.set({ message: result.message, code: result.status == "success" ? CodeType.OK : CodeType.UNKNOWN }))
+        // message.current && setOpen(true)
+        // setTimeout(() => setOpen(false), 5000)
     };
 
     return (
@@ -78,9 +81,9 @@ const SignInForm: React.FC<Props> = ({ submitFn }) => {
                             Sign In
                         </Button>
                     </Box>
-                    <Snackbar open={open} transitionDuration={1000} >
+                    {/* <Snackbar open={open} transitionDuration={1000} >
                         <Alert onClose={() => setOpen(false)} severity={status.current}>{message.current}</Alert>
-                    </Snackbar>
+                    </Snackbar> */}
                 </Box>
             </Container>
         </ThemeProvider>
