@@ -22,8 +22,6 @@ const { always, authenticated, admin, noadmin, noauthenticated } = routesConfig;
 type RouteTypeOrder = RouteType & { order?: number }
 
 function codeProcessing(code: CodePayload): any[] {
-
-    console.log(code);
     const res: any[] = [code.message, code.code === CodeType.OK ? "success" : "error"]
     return res;
 }
@@ -62,7 +60,7 @@ function getRoutes(userData: UserData): RouteType[] {
 const App: React.FC = () => {
 
     const userData: UserData = useSelectorAuth();
-    const code: any = useSelectorCode();
+    const code: any = useSelectorCode(); //
 
     const [open, setOpen] = useState<boolean>(false)
     const routes = useMemo(() => getRoutes(userData), [userData])
@@ -79,7 +77,7 @@ const App: React.FC = () => {
             {/* Route - это условно отображаемый компонент, который предоставляет пользовательский интерфейс, когда его путь совпадает с текущим URL. */}
             <Route path="/" element={<NavigatorDispathcer routes={routes} />}>
                 {/* index - основной подмаршрут */}
-                <Route index element={<Employees />} />
+                <Route index element={<Employees user={userData} />} />
                 <Route path="employees/add" element={<AddEmployee />} />
                 <Route path="employees/generate" element={<GenerateEmployees />} />
                 <Route path="statistics/age" element={<AgeStatitics />} />
@@ -89,7 +87,6 @@ const App: React.FC = () => {
                 <Route path="*" element={<NotFound />} />
             </Route>
         </Routes>
-
         <Snackbar open={open} transitionDuration={1000} >
             <Alert onClose={() => setOpen(false)} severity={severity}>
                 {alertMessage}

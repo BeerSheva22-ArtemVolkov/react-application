@@ -6,7 +6,7 @@ const SignOut: React.FC = () => {
     const dispatch = useDispatch();
     return <button onClick={async () => {
         dispatch(authActions.reset())
-        const res = await authService.logut()
+        const res = await authService.logout()
     }
     }>confirm sign out</button>
 }

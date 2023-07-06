@@ -10,9 +10,7 @@ const codeSlice = createSlice({
     initialState,
     name: 'codeState',
     reducers: {
-        set: (state, data) => {
-            console.log(data);
-            
+        set: (state, data) => {            
             state.codeMessage = data.payload
         },
         reset: (state) => {

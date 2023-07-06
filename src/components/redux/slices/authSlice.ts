@@ -7,7 +7,7 @@ function getUserData(): UserData {
     return userDataJson ? JSON.parse(userDataJson) : null
 }
 
-const initialState: {userData: UserData} = {
+const initialState: { userData: UserData } = {
     userData: getUserData()
 }
 
@@ -16,7 +16,7 @@ const authSlice = createSlice({
     name: "authState",
     reducers: {
         set: (state, data) => {
-            if (data.payload){
+            if (data.payload) {
                 localStorage.setItem(AUTH_ITEM, JSON.stringify(data.payload))
                 state.userData = data.payload
             }
@@ -24,7 +24,7 @@ const authSlice = createSlice({
         reset: (state) => {
             state.userData = null
             localStorage.removeItem(AUTH_ITEM)
-        }
+        },
     }
 })
 export const authActions = authSlice.actions // чтобы менять

@@ -1,13 +1,13 @@
-import { Container, CssBaseline, Box, Typography, TextField, Button, Snackbar, Alert, Select, MenuItem, InputLabel, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, SelectChangeEvent } from "@mui/material";
+import { Container, CssBaseline, Box, Typography, TextField, Button, Select, MenuItem, InputLabel, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, SelectChangeEvent } from "@mui/material";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import InputResult from "../../model/InputResult";
 import { useRef, useState } from "react";
-import { StatusType } from "../../model/StatusType";
 import employeesConfig from "../../config/employees-config.json"
 import Employee from "../../model/Employee";
 import { useDispatch } from "react-redux";
 import { codeActions } from "../redux/slices/codeSlice";
 import CodeType from "../../model/CodeType";
+import Confirm from "../common/Confirm";
 
 const defaultTheme = createTheme();
 
@@ -18,18 +18,17 @@ type Props = {
 const AddEmployeeForm: React.FC<Props> = ({ submitFn }) => {
 
     const dispatch = useDispatch()
-    // const message = useRef<string>('')
-    const inputRef = useRef<string>('')
-    // const [open, setOpen] = useState<boolean>(false)
-    // const status = useRef<StatusType>("success")
+    const inputRef = useRef<any>('')
+
     const [department, setDepartment] = useState<string>('')
     const [dateLabelFocused, setDateLabelFocused] = useState(false);
     const [dateLabelIsEmpty, setDateLabelIsEmpty] = useState(true);
+    const [submitted, setSubmitted] = useState(false)
 
     const handleSubmit = async (event: any) => {
         event.preventDefault();
 
-        const data = new FormData(event.currentTarget);
+        const data = new FormData(inputRef.current);
         const name: string = data.get('name')! as string;
         const birthDate: Date = new Date(data.get('birthDate')! as string);
         const department: string = data.get('department')! as string;
@@ -37,17 +36,28 @@ const AddEmployeeForm: React.FC<Props> = ({ submitFn }) => {
         const gender: "male" | "female" = data.get('gender')! as "male" | "female";
 
         const result = await submitFn({ name, birthDate, department, salary, gender });
-        result.status == 'success' && event.target.reset();
+
+        result.status == 'success' && inputRef.current.reset();
         // message.current = result.message!;
         // status.current = result.status;
         dispatch(codeActions.set({ message: result.message, code: result.status == "success" ? CodeType.OK : CodeType.UNKNOWN }))
         // message.current && setOpen(true)
         // setTimeout(() => setOpen(false), 5000)
+        closeDialog()
     };
 
     const departmentChange = (event: SelectChangeEvent) => {
         setDepartment(event.target.value as string);
     };
+
+    const openDialog = (event: any) => {
+        event.preventDefault();
+        setSubmitted(true)
+    }
+
+    const closeDialog = () => {
+        setSubmitted(false)
+    }
 
     return (
         <ThemeProvider theme={defaultTheme} >
@@ -64,7 +74,7 @@ const AddEmployeeForm: React.FC<Props> = ({ submitFn }) => {
                     <Typography component="h1" variant="h5">
                         Add employee
                     </Typography>
-                    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }} ref={inputRef}>
+                    <Box component="form" onSubmit={openDialog} sx={{ mt: 1 }} ref={inputRef}>
                         <TextField
                             margin="normal"
                             required
@@ -133,6 +143,7 @@ const AddEmployeeForm: React.FC<Props> = ({ submitFn }) => {
                             Add new employee
                         </Button>
                     </Box>
+                    {submitted && <Confirm title={"Add new employee"} question={"Are you shure?"} submitFn={handleSubmit} closeFn={closeDialog}></Confirm>}
                     {/* <Snackbar open={open} transitionDuration={1000} >
                         <Alert onClose={() => setOpen(false)} severity={status.current}>
                             {message.current}

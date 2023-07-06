@@ -12,20 +12,36 @@ const GenerateEmployees: React.FC = () => {
 
     function submitFn(count: string): InputResult {
         let res: InputResult = { status: "success" };
-        try {
-            const employees: Employee[] = Array.from({ length: +count }).map(() => getRandomEmployee(employeeConfig.minSalary, employeeConfig.maxSalary, employeeConfig.minYear, employeeConfig.maxYear, employeeConfig.departments))
-            res.message = `<${count}> employees ${+count > 1 ? 'were' : 'was'} added`
-            employees.forEach(async empl => await employeesService.addEmployee(empl))
-        } catch (error: any) {
-            res.status = 'error';
-            console.log(error);
-            if ((typeof (error) == 'string') && error.includes('Authentication')) {                
-                authService.logout();
-                dispatch(authActions.reset());
-                res.message = ""
+        // try {
+        // console.log(dispatch(authActions.get()));
+
+        const employees: Employee[] = Array.from({ length: +count }).map(() => getRandomEmployee(employeeConfig.minSalary, employeeConfig.maxSalary, employeeConfig.minYear, employeeConfig.maxYear, employeeConfig.departments))
+        res.message = `<${count}> employees ${+count > 1 ? 'were' : 'was'} added`
+        employees.forEach(async empl => {
+            try {
+                await employeesService.addEmployee(empl)
+            } catch (error: any) {
+                res.status = 'error';
+                console.log(error);
+                res.message = error;
+                if ((typeof (error) == 'string')) {
+                    await authService.logout();
+                    dispatch(authActions.reset());
+                }
             }
-            res.message = error;
-        }
+        })
+        // } catch (error: any) {
+        //     res.status = 'error';
+        //     console.log(error);
+        //     if ((typeof (error) == 'string') && error.includes('Authentication')) {
+        //         authService.logout();
+        //         dispatch(authActions.reset());
+        //         res.message = ""
+        //     }
+        //     res.message = error;
+        // }
+        console.log(res);
+
         return res;
     }
 

@@ -4,5 +4,5 @@ import UserData from "../model/UserData";
 export default interface AuthService {
     [x: string]: any;
     login(loginData: LoginData): Promise<UserData>
-    logut(): Promise<void>
+    logout(): Promise<void>
 }

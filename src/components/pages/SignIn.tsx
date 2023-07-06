@@ -4,15 +4,27 @@ import SignInForm from "../forms/SignInForm";
 import LoginData from "../../model/LoginData";
 import { authService } from "../../config/service-config";
 import { authActions } from "../redux/slices/authSlice";
+import UserData from "../../model/UserData";
 const SignIn: React.FC = () => {
 
     const dispatch = useDispatch()
 
     async function submitFn(loginData: LoginData): Promise<InputResult> {
+        let inputResult: InputResult = {
+            status: 'error',
+            message: "Server unavailable, repeat later on"
+        }
+        try {
+            const res: UserData = await authService.login(loginData);
+            res && dispatch(authActions.set(res));
+            inputResult = {
+                status: res ? 'success' : 'error',
+                message: res ? '' : 'Incorrect Credentials'
+            }
+        } catch (error) {
 
-        const res = await authService.login(loginData)        
-        res && dispatch(authActions.set(res));
-        return { status: res ? "success" : "error", message: res ? '' : 'incorrect credentials'}
+        }
+        return inputResult;
     }
 
     return (

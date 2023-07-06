@@ -25,10 +25,12 @@ export default class AuthServiceJWT implements AuthService {
             },
             body: JSON.stringify(loginData)
         })
+        console.log(response);
+        
         return response.ok ? getUserData(await response.json()) : null
     }
 
-    async logut(): Promise<void> {
+    async logout(): Promise<void> {
         localStorage.removeItem(AUTH_DATA_JWT)
     }
 }
