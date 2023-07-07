@@ -41,7 +41,7 @@ const EditEmployee: React.FC<Props> = ({ title, labels, submitFn, closeFn }) => 
 
     return <div>
         <Modal open={true}>
-            <Box sx={{ backgroundColor: 'white' }}>
+            <Box sx={{ backgroundColor: 'white', margin: '25vh', padding: '2vh' }}>
                 <Typography id="modal-modal-title" variant="h6" component="h2">
                     {title}
                 </Typography>
@@ -106,8 +106,8 @@ const EditEmployee: React.FC<Props> = ({ title, labels, submitFn, closeFn }) => 
                         </RadioGroup>
                     </FormControl>
                     <Box>
-                        <Button type='submit'>Submit</Button>
-                        <Button onClick={closeFn}>Cancel</Button>
+                        <Button variant="contained" sx={{ width: "50%" }} type='submit'>Submit</Button>
+                        <Button variant="contained" sx={{ width: "50%" }} onClick={closeFn}>Cancel</Button>
                     </Box>
                 </Box>
             </Box>

@@ -73,8 +73,7 @@ const Employees: React.FC<Props> = ({ user }) => {
         let res: CodePayload = { code: CodeType.OK, message: `employee with id=${deletedID} was edited` }
         let editedEmployee = null;
         try {
-            editedEmployee = employeesService.updateEmployee(employee)
-            // setUpdate(!update)
+            editedEmployee = await employeesService.updateEmployee(employee)
         } catch (error: any) {
             if ((typeof (error) == 'string') && error.includes('Authentication')) {
                 res.code = CodeType.AUTH_ERROR
@@ -85,9 +84,13 @@ const Employees: React.FC<Props> = ({ user }) => {
             }
             res.message = error
         }
+        console.log(res);
+        
         dispatch(codeActions.set(res))
         closeEditDialog();
         const result: InputResult = { status: editedEmployee ? "success" : "error", message: res.message }
+        console.log(result);
+        
         return result
     }
 
@@ -119,8 +122,12 @@ const Employees: React.FC<Props> = ({ user }) => {
     useEffect(() => {
         const subscription = employeesService.getEmployees().subscribe({
             next(emplArray: Employee[] | string) {
+                console.log(emplArray);
+
                 if (typeof emplArray === 'string') {
-                    if (emplArray.includes('Authentication')) {
+
+                    // if (emplArray.includes('Authentication')) {
+                    if (emplArray.includes('Unauthorized')) {
                         dispatch(codeActions.set({ message: emplArray, code: CodeType.AUTH_ERROR }))
                         dispatch(authActions.reset())
                     } else {

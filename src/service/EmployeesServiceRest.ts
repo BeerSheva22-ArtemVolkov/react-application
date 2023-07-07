@@ -38,8 +38,19 @@ export default class EmployeesServiceRest implements EmployeesService {
 
     constructor(private url: string) { }
 
-    async addEmployee(employee: Employee): Promise<Employee> {
+    addEmployee(employee: Employee): Promise<Employee> {
         return this.sendRequest("POST", '', JSON.stringify({ ...employee, userId: "admin" }))
+    }
+
+    deleteEmployee(employeeID: any): Promise<void> {
+        return this.sendRequest("DELETE", `/${employeeID}`)
+    }
+
+    async updateEmployee(employee: Employee): Promise<Employee> {
+        const response = await this.sendRequest("PUT", `/${employee.id}`, JSON.stringify({ ...employee, userId: "admin" }))
+        console.log(response);
+        
+        return this.sendRequest("PUT", `/${employee.id}`, JSON.stringify({ ...employee, userId: "admin" }))
     }
 
     getEmployees(): Observable<Employee[] | string> {
@@ -65,22 +76,15 @@ export default class EmployeesServiceRest implements EmployeesService {
         return this.observable
     }
 
-    async deleteEmployee(employeeID: any): Promise<void> {
-        await this.sendRequest("DELETE", `/${employeeID}`)
-    }
-
-    async updateEmployee(employee: Employee): Promise<Employee> {
-        return this.sendRequest("PUT", `/${employee.id}`, JSON.stringify({ ...employee, userId: "admin" }))
-    }
-
     private async startEmployeesSubscription(subscriber: Subscriber<string | Employee[]>) {
+
         this.sendRequest("GET", '')
             .then(async (employees: Promise<Employee[]>) => {
                 const empls = await employees;
                 empls.map(employee => ({ ...employee, birthDate: new Date(employee.birthDate) }))
                 return empls
             })
-            .then(employees => {
+            .then((employees: Employee[]) => {
                 if (!this.cache.isEqual(employees)) {
                     this.cache.setCache(employees)
                     subscriber.next(employees)
@@ -89,6 +93,10 @@ export default class EmployeesServiceRest implements EmployeesService {
                     console.log('no changes in data');
                 }
             })
+            .catch(error => {
+                subscriber.next(error)
+            })
+
     }
 
     private async sendRequest(method: string, path: string, body?: string): Promise<any> {

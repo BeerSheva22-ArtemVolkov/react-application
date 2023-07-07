@@ -31,6 +31,8 @@ const SignInForm: React.FC<Props> = ({ submitFn }) => {
         const result = await submitFn({ email, password });        
         // message.current = result.message!;
         // status.current = result.status;
+        console.log(result);
+        
         dispatch(codeActions.set({ message: result.message, code: result.status == "success" ? CodeType.OK : CodeType.UNKNOWN }))
         // message.current && setOpen(true)
         // setTimeout(() => setOpen(false), 5000)

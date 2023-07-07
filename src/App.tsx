@@ -17,14 +17,19 @@ import GenerateEmployees from "./components/pages/GenerateEmployees";
 import { Snackbar, Alert } from "@mui/material";
 import CodeType from "./model/CodeType";
 import CodePayload from "./model/CodePayload";
+import { StatusType } from "./model/StatusType";
+import { authActions } from "./components/redux/slices/authSlice";
+import { authService } from "./config/service-config";
+import { useDispatch } from "react-redux";
+import { codeActions } from "./components/redux/slices/codeSlice";
 
 const { always, authenticated, admin, noadmin, noauthenticated } = routesConfig;
 type RouteTypeOrder = RouteType & { order?: number }
 
-function codeProcessing(code: CodePayload): any[] {
-    const res: any[] = [code.message, code.code === CodeType.OK ? "success" : "error"]
-    return res;
-}
+// function codeProcessing(code: CodePayload): any[] {
+//     const res: any[] = [code.message, code.code === CodeType.OK ? "success" : "error"]
+//     return res;
+// }
 
 function getRoutes(userData: UserData): RouteType[] {
 
@@ -61,15 +66,23 @@ const App: React.FC = () => {
 
     const userData: UserData = useSelectorAuth();
     const code: any = useSelectorCode(); //
+    const dispatch = useDispatch();
 
-    const [open, setOpen] = useState<boolean>(false)
     const routes = useMemo(() => getRoutes(userData), [userData])
-    const [alertMessage, severity] = useMemo(() => codeProcessing(code), [code])
+    let [alertMessage, severity] = useMemo(() => codeProcessing(), [code])
 
-    useEffect(() => {
-        alertMessage && setOpen(true)
-        setTimeout(() => setOpen(false), 3000)
-    }, [alertMessage])
+    function codeProcessing(): [string, StatusType] {
+        const res: [string, StatusType] = [code.message, 'success'];
+        switch (code.code) {
+            case CodeType.OK: res[1] = 'success'; break;
+            case CodeType.SERVER_ERROR: res[1] = 'error'; break;
+            case CodeType.UNKNOWN: res[1] = 'error'; break;
+            case CodeType.AUTH_ERROR: res[1] = 'error';
+                dispatch(authActions.reset());
+                authService.logout()
+        }
+        return res;
+    }
 
     // BrowserRouter - это реализация маршрутизатора, для синхронизации пользовательского интерфейса с URL. Это родительский компонент, используемый для хранения всех других компонентов.
     return <BrowserRouter>
@@ -87,12 +100,11 @@ const App: React.FC = () => {
                 <Route path="*" element={<NotFound />} />
             </Route>
         </Routes>
-        <Snackbar open={open} transitionDuration={1000} >
-            <Alert onClose={() => setOpen(false)} severity={severity}>
+        <Snackbar open={!!alertMessage} autoHideDuration={5000} onClose={() => dispatch(codeActions.reset())}>
+            <Alert onClose={() => dispatch(codeActions.reset())} severity={severity} sx={{ width: '100%' }}>
                 {alertMessage}
             </Alert>
         </Snackbar>
-
     </BrowserRouter>
 
 }

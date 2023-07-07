@@ -144,11 +144,6 @@ const AddEmployeeForm: React.FC<Props> = ({ submitFn }) => {
                         </Button>
                     </Box>
                     {submitted && <Confirm title={"Add new employee"} question={"Are you shure?"} submitFn={handleSubmit} closeFn={closeDialog}></Confirm>}
-                    {/* <Snackbar open={open} transitionDuration={1000} >
-                        <Alert onClose={() => setOpen(false)} severity={status.current}>
-                            {message.current}
-                        </Alert>
-                    </Snackbar> */}
                 </Box>
             </Container>
         </ThemeProvider>

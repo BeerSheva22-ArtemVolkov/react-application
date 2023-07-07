@@ -16,6 +16,7 @@ const SignIn: React.FC = () => {
         }
         try {
             const res: UserData = await authService.login(loginData);
+            
             res && dispatch(authActions.set(res));
             inputResult = {
                 status: res ? 'success' : 'error',
@@ -24,6 +25,8 @@ const SignIn: React.FC = () => {
         } catch (error) {
 
         }
+        console.log(inputResult);
+        
         return inputResult;
     }
 
