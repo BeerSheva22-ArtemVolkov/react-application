@@ -1,79 +1,52 @@
-import { AppBar, Box, Drawer, IconButton, List, ListItem, ListItemButton, Toolbar, Typography, Tab } from "@mui/material";
-import { RouteType } from "./Navigator";
-import { Outlet, useLocation, useNavigate } from "react-router";
-import MenuIcon from '@mui/icons-material/Menu';
-import { useEffect, useState } from "react";
-import CloseIcon from '@mui/icons-material/Close';
-import { NavLink } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Menu } from '@mui/icons-material'
+import { AppBar, IconButton, ListItem, Toolbar, Typography, Drawer, List, Box } from '@mui/material';
+import { RouteType } from './Navigator';
 
-const NavigatorPortrait: React.FC<{ routes: RouteType[] }> = ({ routes }) => {
+const NavigatorPortrait: React.FC<{routes: RouteType[]}> = ({ routes }) => {
 
-    const navigate = useNavigate()
+    const [flOpen, setOpen] = useState<boolean>(false);
+
     const location = useLocation();
-    const [open, setOpen] = useState(false);
-    const [menuName, setMenuName] = useState<string>('')
-
-    const handleDrawerOpen = () => {
-        setOpen(true);
-    };
-
-    const handleDrawerClose = () => {
-        setOpen(false);
-    };
-
-    function updateMenuName(menuName: string) {
-        handleDrawerClose();
-        setMenuName(menuName)
-    }
-
+    const navigate = useNavigate();
     useEffect(() => {
-        let index = routes.findIndex(r => r.to === location.pathname)
-        
+        let index = routes.findIndex(r => r.to === location.pathname);
         if (index < 0) {
             index = 0;
         }
         navigate(routes[index].to);
-        setMenuName(routes[index].label)
-    }, [routes])
 
-    return <Box mt={10}>
-        <AppBar sx={{ backgroundColor: 'lightgray' }}>
-            <Toolbar>
-                <IconButton
-                    color="primary"
-                    aria-label="open drawer"
-                    onClick={handleDrawerOpen}
-                    edge="start"
-                >
-                    <MenuIcon />
-                </IconButton>
-                <Box flexGrow={1}>
-                    <Typography variant="h4" noWrap component="p" color={"black"} align="center">
-                        {menuName}
-                    </Typography>
-                </Box>
-            </Toolbar>
-        </AppBar>
-        <Drawer
-            variant="persistent"
-            anchor="left"
-            open={open}
-        >
-            <IconButton onClick={handleDrawerClose}>
-                <CloseIcon />
+    }, [routes]);
+    function getTitle(): string {
+        const route = routes.find(r => r.to === location.pathname)
+        return route ? route.label : '';
+    }
+
+
+    function toggleOpen() {
+        setOpen(!flOpen);
+    }
+    function getListItems(): React.ReactNode {
+        return routes.map(i => <ListItem onClick={toggleOpen} 
+            component={Link} to={i.to} key={i.to}>{i.label}</ListItem>)
+    }
+    return <Box sx={{ marginTop: { xs: "15vh", sm: "20vh" } }}>
+        <AppBar position="fixed">
+            <Toolbar><IconButton onClick={toggleOpen} sx={{ color: 'white' }}>
+                <Menu />
             </IconButton>
-            <List>
-                {routes.map(route => (
-                    <ListItem key={route.label} disablePadding>
-                        <ListItemButton>
-                            <Tab component={NavLink} to={route.to} label={route.label} key={route.label} value={route.label} onClick={updateMenuName.bind(undefined, route.label)} />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
-        </Drawer>
+                <Typography sx={{ width: "100%", textAlign: "center", fontSize: "1.5em" }}>
+                    {getTitle()}
+                </Typography>
+                <Drawer open={flOpen} onClose={toggleOpen} anchor="left">
+                    <List>
+                        {getListItems()}
+                    </List>
+                </Drawer></Toolbar>
+
+        </AppBar>
         <Outlet></Outlet>
     </Box>
 }
-
-export default NavigatorPortrait;
+export default NavigatorPortrait

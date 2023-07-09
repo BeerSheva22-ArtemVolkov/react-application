@@ -1,6 +1,5 @@
 type LoginData = {
     email: string;
-    password: string;
+    password: string
 }
-
 export default LoginData

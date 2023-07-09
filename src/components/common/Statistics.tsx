@@ -1,110 +1,62 @@
-import { Box, FormControl, Grid, InputLabel, MenuItem, Paper, Select, SelectChangeEvent } from "@mui/material"
-import { DataGrid, GridColDef } from "@mui/x-data-grid"
-import { useEffect, useState } from "react"
-import { employeesService } from "../../config/service-config"
-import CodeType from "../../model/CodeType"
-import Employee from "../../model/Employee"
-import { authActions } from "../redux/slices/authSlice"
-import { codeActions } from "../redux/slices/codeSlice"
-import { useDispatch } from "react-redux"
-import React from "react"
-import Chart from "../common/Chart"
-
+import { Box, Container, Grid, FormControl, Select, InputLabel, MenuItem, Typography } from "@mui/material";
+import {DataGrid, GridColDef} from '@mui/x-data-grid';
+import { useRef } from "react";
+import Chart from "./Chart";
+export type StatisticsType = {
+    id: any;
+    min: number;
+    max: number;
+    amount: number
+}[]
 type Props = {
-    field: string
-    initStep: number
-    minValue: number
-    maxValue: number
-    filterFunction(employee: Employee): number
-}
+    title: string;
+    intervalOptions: number[];
+    data: StatisticsType;
+    submitFn: (interval: number)=>void
 
-function getStatistic(empl: Employee[], min: number, max: number, step: number, fn: (employee: Employee) => number, field: string) {
-    let res: any[] = [];
-    let k = 0;
-    for (let i = min; i < max; i += step) {
-        res[k++] = {
-            id: k,
-            [field]: `${i} - ${i + step > max ? max : i + step}`,
-            count: empl.filter(employee => {
-                const fieldValue = fn(employee)                
-                return +fieldValue < i + step && +fieldValue > i
-            }).length
-        }
+}
+const columns: GridColDef[] = [
+    {field: "min", sortable: false, headerName: "Min ",type:"number",
+     headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center', flex:0.5},
+    {field: "max", sortable: false, headerName: "Max ", type:"number",
+    headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center', flex: 0.5},
+    {field: "amount", sortable: false, headerName: "Amount", type:"number",
+    headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center', flex: 0.5}
+]
+const Statistics: React.FC<Props> = ({intervalOptions, submitFn, title, data}) => {
+    const intervalValue = useRef(intervalOptions[0]);
+    function handlerInterval(event: any) {
+        const value: number = +event.target.value;
+        intervalValue.current = value;
+        submitFn(value);
     }
 
-    return res
-}
+  return <Container >
 
-const Statitics: React.FC<Props> = ({field, initStep, minValue, maxValue, filterFunction}) => {
-
-    const dispatch = useDispatch()
-    const [statistics, setStatistics] = useState<any[]>([{ field: 0, count: 0, id: 0 }]);
-    const [step, setStep] = useState(initStep);
-
-    const handleChange = (event: SelectChangeEvent) => {
-        setStep(+event.target.value);
-    };
-
-    const columns: GridColDef[] = [
-        { field: 'id', headerName: "ID", flex: 0.3, headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center' },
-        { field, headerName: field.charAt(0).toUpperCase() + field.slice(1), flex: 0.3, headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center' },
-        { field: 'count', headerName: "Count", flex: 0.3, headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center' }
-    ]
-
-    useEffect(() => {
-        const subscription = employeesService.getEmployees().subscribe({
-            next(emplArray: Employee[] | string) {
-
-                if (typeof emplArray === 'string') {
-                    if (emplArray.includes('Authentication')) {
-                        dispatch(codeActions.set({ message: emplArray, code: CodeType.AUTH_ERROR }))
-                        dispatch(authActions.reset())
-                    } else {
-                        dispatch(codeActions.set({ message: emplArray, code: CodeType.SERVER_ERROR }))
-                    }
-                } else {
-                    const statistic = getStatistic(emplArray, minValue, maxValue, step, filterFunction, field)
-                    setStatistics(statistic);
-                }
-            }
-        });
-        return () => subscription.unsubscribe();
-    }, [step])
-
-    return (<Grid container spacing={2}>
-        <Grid item xs={12} md={6} >
-            <Paper
-                sx={{
-                    p: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: "50vh",
-                    alignItems: 'center'
-                }}
-            >
-                <FormControl sx={{ width: '10vw' }}>
-                    <InputLabel id="demo-simple-select-label">Step</InputLabel>
-                    <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
-                        value={step.toString()}
-                        label="Step"
-                        onChange={handleChange}
-                    >
-                        {Array.from({ length: maxValue / minValue }).map((_, count) => <MenuItem value={(count + 1) * initStep}>{(count + 1) * initStep}</MenuItem>)}
-                    </Select>
-                </FormControl>
-                <Chart data={statistics.map(s => { return { dataX: s[field], dataY: s.count } })} fieldName={field}></Chart >
-            </Paper>
-        </Grid>
-        <Grid item xs={12} md={6} >
-            <Box sx={{ justifyContent: 'center', display: 'flex' }}>
-                <Box sx={{ height: '50vh', width: '80%' }}>
-                    <DataGrid columns={columns} rows={statistics} />
+        <Grid container justifyContent={'center'} spacing={1} >
+            
+            <Grid item xs={8}>
+            <FormControl fullWidth required>
+                        <InputLabel id="select-interval-id">Interval Value</InputLabel>
+                        <Select labelId="select-interval-id" label="Distribution"
+                             onChange={handlerInterval} value={intervalValue.current}>
+                            {intervalOptions.map(o => <MenuItem value={o} key={o}>{o}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <Box sx={{width: "100%",
+                 height: {xs: "30vh", sm: "60vh"}}}>
+                    <DataGrid columns={columns} rows={data} rowHeight={20}/>
                 </Box>
-            </Box>
+            </Grid>
+            <Grid item xs={8} sm={6}>
+                <Box sx={{width: "80%", height: "40vh"}}>
+                    <Chart  yAxis={"Employees"}
+                     data={data.map(s => ({key: s.min, amount: s.amount}))} dataKey={"key"} />
+                </Box>
+            </Grid>
         </Grid>
-    </Grid>)
+  </Container>
 }
-
-export default Statitics
+export default Statistics;

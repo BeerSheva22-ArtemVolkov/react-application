@@ -1,161 +1,143 @@
-import { Container, CssBaseline, Box, TextField, Button, Select, MenuItem, InputLabel, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import InputResult from "../../model/InputResult";
-import { useState } from "react";
-import employeesConfig from "../../config/employees-config.json"
+import React, { useRef, useState } from "react";
+import { FormControl, Grid, TextField, InputLabel, Select, Box, MenuItem, Button, FormLabel, RadioGroup, FormControlLabel, Radio, FormHelperText, Snackbar, Alert } from '@mui/material';
 import Employee from "../../model/Employee";
-import Confirm from "../common/Confirm";
+import employeeConfig from "../../config/employees-config.json"
+import InputResult from "../../model/InputResult";
+import { StatusType } from "../../model/StatusType";
+type Props = {
+    submitFn: (empl: Employee) => Promise<InputResult>,
+    employeeUpdated?: Employee
 
-const defaultTheme = createTheme();
-
-const initialDate: any = '';
+}
+const initialDate: any = 0;
 const initialGender: any = '';
 const initialEmployee: Employee = {
-    id: 0, birthDate: initialDate, name: '', department: '', salary: 0,
-    gender: initialGender
+    id: 0, birthDate: initialDate, name: '',department: '', salary: 0,
+     gender: initialGender
 };
-
-type Props = {
-    submitFn: (employee: Employee) => Promise<InputResult>
-    employeeToUpdate?: Employee
-}
-
-const AddEmployeeForm: React.FC<Props> = ({ submitFn, employeeToUpdate }) => {
-
-    const [dateLabelFocused, setDateLabelFocused] = useState(false);
-    const [dateLabelIsEmpty, setDateLabelIsEmpty] = useState(true);
-    const [submitted, setSubmitted] = useState(false)
-    const [employee, setEmployee] = useState<Employee>(employeeToUpdate || initialEmployee);
-
-    const handleSubmit = async (event: any) => {
+export const EmployeeForm: React.FC<Props> = ({ submitFn, employeeUpdated }) => {
+    const { minYear, minSalary, maxYear, maxSalary, departments }
+        = employeeConfig;
+    const [employee, setEmployee] =
+        useState<Employee>(employeeUpdated || initialEmployee);
+        const [errorMessage, setErrorMessage] = useState('');
+    function handlerName(event: any) {
+        const name = event.target.value;
+        const emplCopy = { ...employee };
+        emplCopy.name = name;
+        setEmployee(emplCopy);
+    }
+    function handlerBirthdate(event: any) {
+        const birthDate = event.target.value;
+        const emplCopy = { ...employee };
+        emplCopy.birthDate = new Date(birthDate);
+        setEmployee(emplCopy);
+    }
+    function handlerSalary(event: any) {
+        const salary: number = +event.target.value;
+        const emplCopy = { ...employee };
+        emplCopy.salary = salary;
+        setEmployee(emplCopy);
+    }
+    function handlerDepartment(event: any) {
+        const department = event.target.value;
+        const emplCopy = { ...employee };
+        emplCopy.department = department;
+        setEmployee(emplCopy);
+    }
+    function genderHandler(event: any) {
+        setErrorMessage('');
+        const gender:'male'|'female' = event.target.value;
+        const emplCopy = { ...employee };
+        emplCopy.gender = gender;
+        setEmployee(emplCopy);
+    }
+    async function onSubmitFn(event: any) {
         event.preventDefault();
-        const result = await submitFn(employee);
-        resetFn(event)
-        closeDialog()
-    };
-
-    const resetFn = (event: any) => {
-        event.preventDefault();
-        setDateLabelIsEmpty(!employeeToUpdate)
-        setEmployee(employeeToUpdate || initialEmployee);
+        if(!employee.gender) {
+            setErrorMessage("Please select gender")
+        } else {
+             const res =  await submitFn(employee);
+             
+             
+             res.status == "success" && event.target.reset();
+            
+        }
+       
+        
+    }
+    function onResetFn(event: any) {
+        setEmployee(employeeUpdated || initialEmployee);
     }
 
-    const openDialog = (event: any) => {
-        event.preventDefault();
-        setSubmitted(true)
-    }
-
-    const closeDialog = () => {
-        setSubmitted(false)
-    }
-
-    return (
-        <ThemeProvider theme={defaultTheme} >
-            <Container component="main" maxWidth="xs">
-                <CssBaseline />
-                <Box
-                    sx={{
-                        marginTop: 8,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                    }}
-                >
-                    <Box component="form" onSubmit={openDialog} onReset={resetFn} sx={{ mt: 1 }}>
-                        <TextField
-                            onChange={e => setEmployee({ ...employee, name: e.target.value })}
-                            margin="normal"
-                            required
-                            fullWidth
-                            id="name"
-                            label="Name"
-                            name="name"
-                            autoComplete="name"
-                            autoFocus
-                            value={employee.name || ''}
-                        />
-                        <TextField
-                            onFocus={() => setDateLabelFocused(true)}
-                            onBlur={() => setDateLabelFocused(false)}
-                            onChange={e => {
-                                setEmployee({ ...employee, birthDate: new Date(e.target.value) })
-                                setDateLabelIsEmpty(e.target.value ? false : true)
-                            }}
-                            margin="normal"
-                            required
-                            fullWidth
-                            disabled={!!employeeToUpdate}
-                            name="birthDate"
-                            label="Birth date"
-                            type={!dateLabelIsEmpty || dateLabelFocused ? "date" : "text"}
-                            id="BirthDate"
-                            value={employee.birthDate ? employee.birthDate.toISOString().substring(0, 10) : ''}
-                            InputProps={{ inputProps: { min: `${employeesConfig.minYear}-01-01`, max: `${employeesConfig.maxYear}-12-31` } }}
-                        />
-                        <FormControl fullWidth margin="normal" required>
-                            <InputLabel id="department-select-label">Department</InputLabel>
-                            <Select
-                                onChange={e => setEmployee({ ...employee, department: e.target.value })}
-                                name="department"
-                                labelId="department-label"
-                                id="department-select"
-                                label="Department"
-                                value={employee.department || ''}
-                            >
-                                {employeesConfig.departments.map(dep => <MenuItem value={dep}>{dep}</MenuItem>)}
-                            </Select>
-                        </FormControl>
-                        <TextField
-                            onChange={e => setEmployee({ ...employee, salary: +e.target.value })}
-                            margin="normal"
-                            required
-                            fullWidth
-                            name="salary"
-                            label="Salary"
-                            type="number"
-                            value={employee.salary || ''}
-                            InputProps={{ inputProps: { min: employeesConfig.minSalary * 1000, max: employeesConfig.maxSalary * 1000 } }}
-                            id="Salary"
-                        />
-                        <FormControl required fullWidth disabled={!!employeeToUpdate}>
-                            <FormLabel id="gender-label">Gender</FormLabel>
-                            <RadioGroup
-                                onChange={e => setEmployee({ ...employee, gender: e.target.value as "male" | "female" })}
-                                aria-required
-                                row
-                                aria-labelledby="gender-label"
-                                name="gender"
-                                defaultValue="male"
-                                value={employee.gender || ''}
-                            >
-                                <FormControlLabel value="male" control={<Radio />} label="Male" />
-                                <FormControlLabel value="female" control={<Radio />} label="Female" />
-                            </RadioGroup>
-                        </FormControl>
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            // sx={{ mt: 3, mb: 2 }}
-                            sx={{ m: 0.5 }}
+    return <Box sx={{ marginTop: { sm: "25vh" } }}>
+        <form onSubmit={onSubmitFn} onReset={onResetFn}>
+            <Grid container spacing={4} justifyContent="center">
+                <Grid item xs={8} sm={5} >
+                    <FormControl fullWidth required>
+                        <InputLabel id="select-department-id">Department</InputLabel>
+                        <Select labelId="select-department-id" label="Department"
+                            value={employee.department} onChange={handlerDepartment}>
+                            <MenuItem value=''>None</MenuItem>
+                            {departments.map(dep => <MenuItem value={dep} key={dep}>{dep}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                </Grid>
+                <Grid item xs={8} sm={5} >
+                    <TextField type="text" required fullWidth label="Employee name"
+                        helperText="enter Employee name" onChange={handlerName}
+                        value={employee.name} />
+                </Grid>
+                <Grid item xs={8} sm={4} md={5}>
+                    <TextField type="date" required fullWidth label="birthDate"
+                        value={employee.birthDate ? employee.birthDate.toISOString()
+                            .substring(0, 10) : ''} inputProps={{
+                                readOnly: !!employeeUpdated,
+                            min: `${minYear}-01-01`,
+                            max: `${maxYear}-12-31`
+                        }} InputLabelProps={{
+                            shrink: true
+                        }} onChange={handlerBirthdate} />
+                </Grid>
+                <Grid item xs={8} sm={4} md={5} >
+                    <TextField label="salary" fullWidth required
+                        type="number" onChange={handlerSalary}
+                        value={employee.salary || ''}
+                        helperText={`enter salary in range [${minSalary}-${maxSalary}]`}
+                        inputProps={{
+                            min: `${minSalary }`,
+                            max: `${maxSalary }`
+                        }} />
+                </Grid>
+                <Grid item xs={8} sm={4} md={5}>
+                    <FormControl required error={!!errorMessage}>
+                        <FormLabel id="gender-group-label">Gender</FormLabel>
+                        <RadioGroup
+                            aria-labelledby="gender-group-label"
+                            defaultValue=""
+                            value={employee.gender || ''}
+                            name="radio-buttons-group"
+                           row onChange={genderHandler}
                         >
-                            Submit
-                        </Button>
-                        <Button
-                            type="reset"
-                            fullWidth
-                            variant="contained"
-                            // sx={{ mt: 3, mb: 2 }}
-                            sx={{ m: 0.5 }}
-                        >
-                            Reset
-                        </Button>
-                    </Box>
-                    {submitted && <Confirm title={`${!!employeeToUpdate ? 'Update' : 'Add'} employee`} question={`Are you want to ${!!employeeToUpdate ? 'update' : 'add new '} employee?`} submitFn={handleSubmit} closeFn={closeDialog}></Confirm>}
-                </Box>
-            </Container>
-        </ThemeProvider>
-    );
-}
+                            <FormControlLabel value="female" control={<Radio />} label="Female" disabled = {!!employeeUpdated} />
+                            <FormControlLabel value="male" control={<Radio />} label="Male" disabled = {!!employeeUpdated}/>
+                            <FormHelperText>{errorMessage}</FormHelperText>
+                        </RadioGroup>
+                    </FormControl>
+                </Grid>
+            </Grid>
 
-export default AddEmployeeForm
+
+
+
+            <Box sx={{ marginTop: { xs: "10vh", sm: "5vh" }, textAlign: "center" }}>
+                <Button type="submit" >Submit</Button>
+                <Button type="reset">Reset</Button>
+            </Box>
+
+
+
+        </form>
+       
+    </Box>
+}

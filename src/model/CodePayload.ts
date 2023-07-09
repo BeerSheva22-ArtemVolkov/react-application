@@ -1,8 +1,7 @@
 import CodeType from "./CodeType"
 
 type CodePayload = {
-    code: CodeType
+    code: CodeType;
     message: string
 }
-
-export default CodePayload
+export default CodePayload;

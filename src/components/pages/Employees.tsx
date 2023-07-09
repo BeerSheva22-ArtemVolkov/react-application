@@ -1,164 +1,168 @@
 import { Box, Modal } from "@mui/material"
-import { useEffect, useState } from "react"
+import { useState, useEffect, useRef, useMemo } from "react";
 import Employee from "../../model/Employee";
-import { authService, employeesService } from "../../config/service-config";
-import { DataGrid, GridActionsCellItem, GridColDef, GridRowParams } from "@mui/x-data-grid";
-import { useDispatch } from "react-redux";
-import { authActions } from "../redux/slices/authSlice";
-import { codeActions } from "../redux/slices/codeSlice";
-import CodeType from "../../model/CodeType";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import CodePayload from "../../model/CodePayload";
-import Confirm from "../common/Confirm";
+import { employeesService } from "../../config/service-config";
+import { Subscription } from 'rxjs';
+import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
+
+import { Delete, Edit, Man, Woman } from "@mui/icons-material";
+import { useSelectorAuth } from "../../redux/store";
+import { Confirmation } from "../common/Confirmation";
+import { EmployeeForm } from "../forms/EmployeeForm";
 import InputResult from "../../model/InputResult";
-import UserData from "../../model/UserData";
-import EmployeeForm from "../forms/EmployeeForm";
-
-type Props = {
-    user: UserData
-}
-
-const Employees: React.FC<Props> = ({ user }) => {
-
-    const dispatch = useDispatch()
-    const [employees, setEemployees] = useState<Employee[]>([]);
-    const [deleteDialogOpened, setDeleteDialogOpened] = useState(false)
-    const [deletedID, setDeletedID] = useState('')
-    const [editedEmployee, setEditedEmployee] = useState<Employee>()
-    const [editDialogOpened, setEditDialogOpened] = useState(false)
-
-    const openDeleteDialog = (deletedID: any) => {
-        setDeletedID(deletedID)
-        setDeleteDialogOpened(true)
-    }
-
-    const closeDeleteDialog = () => {
-        setDeleteDialogOpened(false)
-    }
-
-    const openEditDialog = (editLabel: any) => {
-        setEditedEmployee({ ...editLabel.row, id: editLabel.id as number })
-        setEditDialogOpened(true)
-    }
-
-    const closeEditDialog = () => {
-        setEditDialogOpened(false)
-    }
-
-    const deleteUser = async (event: any) => {
-        event.preventDefault();
-        let res: CodePayload = { code: CodeType.OK, message: `employee with id=${deletedID} was deleted` }
-        try {
-            await employeesService.deleteEmployee(deletedID)
-        } catch (error: any) {
-            if ((typeof (error) == 'string') && error.includes('Authentication')) {
-                res.code = CodeType.AUTH_ERROR
-                await authService.logout();
-                dispatch(authActions.reset());
-            } else {
-                res.code = CodeType.SERVER_ERROR
-            }
-            res.message = error
+import { useDispatchCode, useSelectorEmployees } from "../../hooks/hooks";
+const columnsCommon: GridColDef[] = [
+    {
+        field: 'id', headerName: 'ID', flex: 0.5, headerClassName: 'data-grid-header',
+        align: 'center', headerAlign: 'center'
+    },
+    {
+        field: 'name', headerName: 'Name', flex: 0.7, headerClassName: 'data-grid-header',
+        align: 'center', headerAlign: 'center'
+    },
+    {
+        field: 'birthDate', headerName: "Date", flex: 0.8, type: 'date', headerClassName: 'data-grid-header',
+        align: 'center', headerAlign: 'center'
+    },
+    {
+        field: 'department', headerName: 'Department', flex: 0.8, headerClassName: 'data-grid-header',
+        align: 'center', headerAlign: 'center'
+    },
+    {
+        field: 'salary', headerName: 'Salary', type: 'number', flex: 0.6, headerClassName: 'data-grid-header',
+        align: 'center', headerAlign: 'center'
+    },
+    {
+        field: 'gender', headerName: 'Gender', flex: 0.6, headerClassName: 'data-grid-header',
+        align: 'center', headerAlign: 'center', renderCell: params => {
+            return params.value == "male" ? <Man /> : <Woman />
         }
-        dispatch(codeActions.set(res))
-        closeDeleteDialog();
-    }
+    },
+];
 
-    const editUser = async (employee: Employee) => {
+const style = {
+    position: 'absolute' as 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+};
 
-        let res: CodePayload = { code: CodeType.OK, message: `employee with id=${employee.id} was edited` }
-        let editedEmployee = null;
-        try {
-            editedEmployee = await employeesService.updateEmployee(employee)
-        } catch (error: any) {
-            if ((typeof (error) == 'string') && error.includes('Authentication')) {
-                res.code = CodeType.AUTH_ERROR
-                authService.logout();
-                dispatch(authActions.reset());
-            } else {
-                res.code = CodeType.SERVER_ERROR
+const Employees: React.FC = () => {
+    const columnsAdmin: GridColDef[] = [
+        {
+            field: 'actions', type: "actions", getActions: (params) => {
+                return [
+                    <GridActionsCellItem label="remove" icon={<Delete />}
+                        onClick={() => removeEmployee(params.id)
+                        } />,
+                    <GridActionsCellItem label="update" icon={<Edit />}
+                        onClick={() => {
+                            employeeId.current = params.id as any;
+                            if (params.row) {
+                                const empl = params.row;
+                                empl && (employee.current = empl);
+                                setFlEdit(true)
+                            }
+
+                        }
+                        } />
+                ];
             }
-            res.message = error
         }
-
-        dispatch(codeActions.set(res))
-        closeEditDialog();
-        const result: InputResult = { status: editedEmployee ? "success" : "error", message: res.message }
-
-        return result
-    }
-
-    const columns: GridColDef[] = [
-        { field: 'id', headerName: "ID", flex: 0.3, headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center' },
-        { field: 'name', headerName: "Name", flex: 0.7, headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center' },
-        { field: 'birthDate', type: 'date', headerName: "Date", flex: 1, headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center' },
-        { field: 'department', headerName: "Department", flex: 0.7, headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center' },
-        { field: 'salary', type: "number", headerName: "Salary", flex: 0.6, headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center' },
-        { field: 'gender', headerName: "Gender", flex: 0.4, headerClassName: 'data-grid-header', align: 'center', headerAlign: 'center' },
     ]
+    const dispatch = useDispatchCode();
+    const userData = useSelectorAuth();
+    const employees = useSelectorEmployees();
+    const columns = useMemo(() => getColumns(), [userData, employees]);
 
-    const actionsColumn: GridColDef = {
-        field: 'actions', type: 'actions', getActions: (params: GridRowParams) => [
-            <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => openDeleteDialog(params.id)} />,
-            <GridActionsCellItem icon={<EditIcon />} label="Edit" onClick={() => openEditDialog(params)} />
-        ]
-    }
-
-    function getColumns(role: string) {
-        const res = columns;
-        if (role == 'admin') {
-            res.push(actionsColumn)
+    const [openConfirm, setOpenConfirm] = useState(false);
+    const [openEdit, setFlEdit] = useState(false);
+    const title = useRef('');
+    const content = useRef('');
+    const employeeId = useRef('');
+    const confirmFn = useRef<any>(null);
+    const employee = useRef<Employee | undefined>();
+    function getColumns(): GridColDef[] {
+        let res: GridColDef[] = columnsCommon;
+        if (userData && userData.role == 'admin') {
+            res = res.concat(columnsAdmin);
         }
-        return res
+        return res;
+    }
+    function removeEmployee(id: any) {
+        title.current = "Remove Employee object?";
+        const employee = employees.find(empl => empl.id == id);
+        content.current = `You are going remove employee with id ${employee?.id}`;
+        employeeId.current = id;
+        confirmFn.current = actualRemove;
+        setOpenConfirm(true);
+    }
+    async function actualRemove(isOk: boolean) {
+        let errorMessage: string = '';
+        if (isOk) {
+            try {
+                await employeesService.deleteEmployee(employeeId.current);
+            } catch (error: any) {
+                errorMessage = error;
+            }
+        }
+        dispatch(errorMessage, '');
+        setOpenConfirm(false);
+    }
+    function updateEmployee(empl: Employee): Promise<InputResult> {
+        setFlEdit(false)
+        const res: InputResult = { status: 'error', message: '' };
+        if (JSON.stringify(employee.current) != JSON.stringify(empl)) {
+            title.current = "Update Employee object?";
+            employee.current = empl;
+            content.current = `You are going update employee with id ${empl.id}`;
+            confirmFn.current = actualUpdate;
+            setOpenConfirm(true);
+        }
+        return Promise.resolve(res);
+    }
+    async function actualUpdate(isOk: boolean) {
+
+        let errorMessage: string = '';
+
+        if (isOk) {
+            try {
+                await employeesService.updateEmployee(employee.current!);
+            } catch (error: any) {
+                errorMessage = error
+            }
+        }
+        dispatch(errorMessage, '');
+        setOpenConfirm(false);
+
     }
 
-    // обсервер - постоянный стрим событий
-    useEffect(() => {
-        const subscription = employeesService.getEmployees().subscribe({
-            next(emplArray: Employee[] | string) {
-
-                if (typeof emplArray === 'string') {                    
-                    if (emplArray.includes('Authentication')) {
-                        dispatch(codeActions.set({ message: emplArray, code: CodeType.AUTH_ERROR }))
-                        dispatch(authActions.reset())
-                    } else {
-                        dispatch(codeActions.set({ message: emplArray, code: CodeType.SERVER_ERROR }))
-                    }
-                } else {
-                    setEemployees(emplArray.map(e => ({ ...e, birthDate: new Date(e.birthDate) })));
-                }
-            }
-        });
-        return () => subscription.unsubscribe();
-    }, [])
-
-
-    return (<Box sx={{ justifyContent: 'center', display: 'flex' }}>
-        <Box sx={{ height: '50vh', width: '80vw' }}>
-            <DataGrid columns={getColumns(user?.role ? user.role : '')} rows={employees} />
+    return <Box sx={{
+        display: 'flex', justifyContent: 'center',
+        alignContent: 'center'
+    }}>
+        <Box sx={{ height: '80vh', width: '95vw' }}>
+            <DataGrid columns={columns} rows={employees} />
         </Box>
-        <Modal open={deleteDialogOpened} >
-            <Box>
-                <Confirm title={"Delete employee"} question={"Are you shure?"} submitFn={deleteUser} closeFn={closeDeleteDialog}></Confirm>
+        <Confirmation confirmFn={confirmFn.current} open={openConfirm}
+            title={title.current} content={content.current}></Confirmation>
+        <Modal
+            open={openEdit}
+            onClose={() => setFlEdit(false)}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+        >
+            <Box sx={style}>
+                <EmployeeForm submitFn={updateEmployee} employeeUpdated={employee.current} />
             </Box>
         </Modal>
-        <Modal open={editDialogOpened} onClose={closeEditDialog}>
-            <Box sx={{
-                position: 'absolute' as 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 400,
-                bgcolor: 'background.paper',
-                border: '2px solid #000',
-                boxShadow: 24,
-                p: 4,
-            }}>
-                <EmployeeForm submitFn={editUser} employeeToUpdate={editedEmployee} ></EmployeeForm>
-            </Box>
-        </Modal >
-    </Box >)
-}
 
-export default Employees
+
+    </Box>
+}
+export default Employees;

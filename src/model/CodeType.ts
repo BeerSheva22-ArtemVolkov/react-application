@@ -1,5 +1,4 @@
-enum CodeType {
-    OK, AUTH_ERROR, SERVER_ERROR, UNKNOWN 
+  enum CodeType {
+    OK, AUTH_ERROR, SERVER_ERROR, UNKNOWN
 }
-
-export default CodeType
+export default CodeType;

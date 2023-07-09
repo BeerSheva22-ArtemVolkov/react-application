@@ -1,8 +1,7 @@
-import { StatusType } from "./StatusType"
+import { StatusType } from "./StatusType";
 
 type InputResult = {
-    status: StatusType
+    status: StatusType;
     message?: string
 }
-
-export default InputResult
+export default InputResult;
