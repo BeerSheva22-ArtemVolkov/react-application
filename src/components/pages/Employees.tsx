@@ -21,9 +21,8 @@ type Props = {
 
 const Employees: React.FC<Props> = ({ user }) => {
 
-    const [employees, setEemployees] = useState<Employee[]>([]);
     const dispatch = useDispatch()
-
+    const [employees, setEemployees] = useState<Employee[]>([]);
     const [deleteDialogOpened, setDeleteDialogOpened] = useState(false)
     const [deletedID, setDeletedID] = useState('')
     const [editedEmployee, setEditedEmployee] = useState<Employee>()
@@ -121,7 +120,6 @@ const Employees: React.FC<Props> = ({ user }) => {
 
                 if (typeof emplArray === 'string') {                    
                     if (emplArray.includes('Authentication')) {
-                    // if (emplArray.includes('Unauthorized')) {
                         dispatch(codeActions.set({ message: emplArray, code: CodeType.AUTH_ERROR }))
                         dispatch(authActions.reset())
                     } else {
