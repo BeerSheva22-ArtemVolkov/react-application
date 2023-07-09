@@ -1,34 +1,33 @@
-import AddEmployeeForm from "../forms/AddEmployeeForm";
+import EmployeeForm from "../forms/EmployeeForm";
 import InputResult from "../../model/InputResult";
 import Employee from "../../model/Employee";
-import { authService, employeesService } from "../../config/service-config";
-import { authActions } from "../redux/slices/authSlice";
+import { employeesService } from "../../config/service-config";
 import { useDispatch } from "react-redux";
+import CodePayload from "../../model/CodePayload";
+import CodeType from "../../model/CodeType";
+import { codeActions } from "../redux/slices/codeSlice";
 
 const AddEmployee: React.FC = () => {
-
-    const dispatch = useDispatch()
-    
-    async function submitFn(employee: Employee): Promise<InputResult> {
-        let res: InputResult = { status: "success" };
+    const dispatch = useDispatch();
+    const codeMessage: CodePayload = { code: CodeType.OK, message: '' };
+    async function submitFn(empl: Employee): Promise<InputResult> {
+        const res: InputResult = { status: 'success', message: '' };
         try {
-            const empl: Employee = await employeesService.addEmployee(employee)
-            res.message = `employee with id=${empl.id} was added`
+            const employee: Employee = await employeesService.addEmployee(empl);
+            codeMessage.message = `employee with id: ${employee.id} has been added`
         } catch (error: any) {
             res.status = 'error';
-            if ((typeof (error) == 'string') && error.includes('Authentication')) {
-                authService.logout();
-                dispatch(authActions.reset());
-                res.message = ""
+
+            if (error.includes('Authentication')) {
+                codeMessage.code = CodeType.AUTH_ERROR;
+                codeMessage.message = ''
+
             }
-            res.message = error;
+            codeMessage.message = error;
         }
+        dispatch(codeActions.set(codeMessage))
         return res;
     }
-
-    return (
-        <AddEmployeeForm submitFn={submitFn} ></AddEmployeeForm>
-    )
+    return <EmployeeForm submitFn={submitFn} />
 }
-
 export default AddEmployee

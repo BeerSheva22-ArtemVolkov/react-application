@@ -83,9 +83,6 @@ const SignInForm: React.FC<Props> = ({ submitFn }) => {
                             Sign In
                         </Button>
                     </Box>
-                    {/* <Snackbar open={open} transitionDuration={1000} >
-                        <Alert onClose={() => setOpen(false)} severity={status.current}>{message.current}</Alert>
-                    </Snackbar> */}
                 </Box>
             </Container>
         </ThemeProvider>

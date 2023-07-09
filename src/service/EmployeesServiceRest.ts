@@ -2,7 +2,6 @@ import { Observable, Subscriber } from "rxjs";
 import Employee from "../model/Employee";
 import { AUTH_DATA_JWT } from "./AuthServiceJwt";
 import EmployeesService from "./EmployeesService";
-import Employees from "../components/pages/Employees";
 
 const POLLER_INTERVAL = 2000;
 

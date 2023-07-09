@@ -4,14 +4,13 @@ import { LineChart, Line, XAxis, YAxis, Label, ResponsiveContainer } from 'recha
 
 type Props = {
     data: { dataX: string, dataY: number }[]
+    fieldName: string
 }
 
-const Chart: React.FC<Props> = ({ data }) => {
+const Chart: React.FC<Props> = ({ data, fieldName }) => {
+
     const theme = useTheme();
-    console.log(data);
-    
-    console.log(Object.keys(data[0]));
-    
+
     return (
         <React.Fragment>
             <ResponsiveContainer>
@@ -26,13 +25,22 @@ const Chart: React.FC<Props> = ({ data }) => {
                 >
                     <XAxis
                         dataKey={Object.keys(data[0])[0]}
-                        // dataKey='dataX'
                         stroke={theme.palette.text.secondary}
                         style={theme.typography.body2}
-                    />
+                    >
+                        <Label
+                            position="center"
+                            style={{
+                                textAnchor: 'middle',
+                                fill: theme.palette.text.primary,
+                                ...theme.typography.body1
+                            }}
+                        >
+                            {fieldName}
+                        </Label>
+                    </XAxis>
                     <YAxis
                         dataKey={Object.keys(data[0])[1]}
-                        // dataKey='dataY'
                         stroke={theme.palette.text.secondary}
                         style={theme.typography.body2}
                     >
@@ -45,14 +53,13 @@ const Chart: React.FC<Props> = ({ data }) => {
                                 ...theme.typography.body1,
                             }}
                         >
-                            ...
+                            Count
                         </Label>
                     </YAxis>
                     <Line
                         isAnimationActive={false}
                         type="monotone"
                         dataKey={Object.keys(data[0])[1]}
-                        // dataKey='dataY'
                         stroke={theme.palette.primary.main}
                         dot={false}
                     />

@@ -1,54 +1,44 @@
-import { Container, CssBaseline, Box, Typography, TextField, Button, Select, MenuItem, InputLabel, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, SelectChangeEvent } from "@mui/material";
+import { Container, CssBaseline, Box, TextField, Button, Select, MenuItem, InputLabel, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import InputResult from "../../model/InputResult";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import employeesConfig from "../../config/employees-config.json"
 import Employee from "../../model/Employee";
-import { useDispatch } from "react-redux";
-import { codeActions } from "../redux/slices/codeSlice";
-import CodeType from "../../model/CodeType";
 import Confirm from "../common/Confirm";
 
 const defaultTheme = createTheme();
 
+const initialDate: any = '';
+const initialGender: any = '';
+const initialEmployee: Employee = {
+    id: 0, birthDate: initialDate, name: '', department: '', salary: 0,
+    gender: initialGender
+};
+
 type Props = {
     submitFn: (employee: Employee) => Promise<InputResult>
+    employeeToUpdate?: Employee
 }
 
-const AddEmployeeForm: React.FC<Props> = ({ submitFn }) => {
+const AddEmployeeForm: React.FC<Props> = ({ submitFn, employeeToUpdate }) => {
 
-    const dispatch = useDispatch()
-    const inputRef = useRef<any>('')
-
-    const [department, setDepartment] = useState<string>('')
     const [dateLabelFocused, setDateLabelFocused] = useState(false);
     const [dateLabelIsEmpty, setDateLabelIsEmpty] = useState(true);
     const [submitted, setSubmitted] = useState(false)
+    const [employee, setEmployee] = useState<Employee>(employeeToUpdate || initialEmployee);
 
     const handleSubmit = async (event: any) => {
         event.preventDefault();
-
-        const data = new FormData(inputRef.current);
-        const name: string = data.get('name')! as string;
-        const birthDate: Date = new Date(data.get('birthDate')! as string);
-        const department: string = data.get('department')! as string;
-        const salary: number = +(data.get('salary')!) as number;
-        const gender: "male" | "female" = data.get('gender')! as "male" | "female";
-
-        const result = await submitFn({ name, birthDate, department, salary, gender });
-
-        result.status == 'success' && inputRef.current.reset();
-        // message.current = result.message!;
-        // status.current = result.status;
-        dispatch(codeActions.set({ message: result.message, code: result.status == "success" ? CodeType.OK : CodeType.UNKNOWN }))
-        // message.current && setOpen(true)
-        // setTimeout(() => setOpen(false), 5000)
+        const result = await submitFn(employee);
+        resetFn(event)
         closeDialog()
     };
 
-    const departmentChange = (event: SelectChangeEvent) => {
-        setDepartment(event.target.value as string);
-    };
+    const resetFn = (event: any) => {
+        event.preventDefault();
+        setDateLabelIsEmpty(!employeeToUpdate)
+        setEmployee(employeeToUpdate || initialEmployee);
+    }
 
     const openDialog = (event: any) => {
         event.preventDefault();
@@ -71,11 +61,9 @@ const AddEmployeeForm: React.FC<Props> = ({ submitFn }) => {
                         alignItems: 'center',
                     }}
                 >
-                    <Typography component="h1" variant="h5">
-                        Add employee
-                    </Typography>
-                    <Box component="form" onSubmit={openDialog} sx={{ mt: 1 }} ref={inputRef}>
+                    <Box component="form" onSubmit={openDialog} onReset={resetFn} sx={{ mt: 1 }}>
                         <TextField
+                            onChange={e => setEmployee({ ...employee, name: e.target.value })}
                             margin="normal"
                             required
                             fullWidth
@@ -84,51 +72,61 @@ const AddEmployeeForm: React.FC<Props> = ({ submitFn }) => {
                             name="name"
                             autoComplete="name"
                             autoFocus
+                            value={employee.name || ''}
                         />
                         <TextField
                             onFocus={() => setDateLabelFocused(true)}
                             onBlur={() => setDateLabelFocused(false)}
-                            onChange={e => setDateLabelIsEmpty(e.target.value ? false : true)}
+                            onChange={e => {
+                                setEmployee({ ...employee, birthDate: new Date(e.target.value) })
+                                setDateLabelIsEmpty(e.target.value ? false : true)
+                            }}
                             margin="normal"
                             required
                             fullWidth
+                            disabled={!!employeeToUpdate}
                             name="birthDate"
                             label="Birth date"
                             type={!dateLabelIsEmpty || dateLabelFocused ? "date" : "text"}
                             id="BirthDate"
-                            InputProps={{ inputProps: { min: (new Date(employeesConfig.minYear, 0, 0)).toISOString().split("T")[0], max: (new Date(employeesConfig.maxYear, 0, 0)).toISOString().split("T")[0] } }}
+                            value={employee.birthDate ? employee.birthDate.toISOString().substring(0, 10) : ''}
+                            InputProps={{ inputProps: { min: `${employeesConfig.minYear}-01-01`, max: `${employeesConfig.maxYear}-12-31` } }}
                         />
                         <FormControl fullWidth margin="normal" required>
                             <InputLabel id="department-select-label">Department</InputLabel>
                             <Select
+                                onChange={e => setEmployee({ ...employee, department: e.target.value })}
                                 name="department"
                                 labelId="department-label"
                                 id="department-select"
                                 label="Department"
-                                value={department}
-                                onChange={departmentChange}
+                                value={employee.department || ''}
                             >
                                 {employeesConfig.departments.map(dep => <MenuItem value={dep}>{dep}</MenuItem>)}
                             </Select>
                         </FormControl>
                         <TextField
+                            onChange={e => setEmployee({ ...employee, salary: +e.target.value })}
                             margin="normal"
                             required
                             fullWidth
                             name="salary"
                             label="Salary"
                             type="number"
+                            value={employee.salary || ''}
                             InputProps={{ inputProps: { min: employeesConfig.minSalary * 1000, max: employeesConfig.maxSalary * 1000 } }}
                             id="Salary"
                         />
-                        <FormControl required>
+                        <FormControl required fullWidth disabled={!!employeeToUpdate}>
                             <FormLabel id="gender-label">Gender</FormLabel>
                             <RadioGroup
+                                onChange={e => setEmployee({ ...employee, gender: e.target.value as "male" | "female" })}
                                 aria-required
                                 row
                                 aria-labelledby="gender-label"
                                 name="gender"
                                 defaultValue="male"
+                                value={employee.gender || ''}
                             >
                                 <FormControlLabel value="male" control={<Radio />} label="Male" />
                                 <FormControlLabel value="female" control={<Radio />} label="Female" />
@@ -138,12 +136,22 @@ const AddEmployeeForm: React.FC<Props> = ({ submitFn }) => {
                             type="submit"
                             fullWidth
                             variant="contained"
-                            sx={{ mt: 3, mb: 2 }}
+                            // sx={{ mt: 3, mb: 2 }}
+                            sx={{ m: 0.5 }}
                         >
-                            Add new employee
+                            Submit
+                        </Button>
+                        <Button
+                            type="reset"
+                            fullWidth
+                            variant="contained"
+                            // sx={{ mt: 3, mb: 2 }}
+                            sx={{ m: 0.5 }}
+                        >
+                            Reset
                         </Button>
                     </Box>
-                    {submitted && <Confirm title={"Add new employee"} question={"Are you shure?"} submitFn={handleSubmit} closeFn={closeDialog}></Confirm>}
+                    {submitted && <Confirm title={`${!!employeeToUpdate ? 'Update' : 'Add'} employee`} question={`Are you want to ${!!employeeToUpdate ? 'update' : 'add new '} employee?`} submitFn={handleSubmit} closeFn={closeDialog}></Confirm>}
                 </Box>
             </Container>
         </ThemeProvider>

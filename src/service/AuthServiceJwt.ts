@@ -18,15 +18,14 @@ export default class AuthServiceJWT implements AuthService {
     constructor(private url: string) { }
 
     async login(loginData: LoginData): Promise<UserData | null> {
+        
         const response = await fetch(this.url, {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(loginData)
-        })
-        console.log(response);
-        
+        })        
         return response.ok ? getUserData(await response.json()) : null
     }
 

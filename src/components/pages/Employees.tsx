@@ -1,4 +1,4 @@
-import { Box } from "@mui/material"
+import { Box, Modal } from "@mui/material"
 import { useEffect, useState } from "react"
 import Employee from "../../model/Employee";
 import { authService, employeesService } from "../../config/service-config";
@@ -11,9 +11,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import CodePayload from "../../model/CodePayload";
 import Confirm from "../common/Confirm";
-import EditEmployee from "../common/EditEmployee";
 import InputResult from "../../model/InputResult";
 import UserData from "../../model/UserData";
+import EmployeeForm from "../forms/EmployeeForm";
 
 type Props = {
     user: UserData
@@ -23,13 +23,11 @@ const Employees: React.FC<Props> = ({ user }) => {
 
     const [employees, setEemployees] = useState<Employee[]>([]);
     const dispatch = useDispatch()
-    // const [update, setUpdate] = useState<boolean>(false)
 
-    const [deleteDialogOpend, setDeleteDialogOpened] = useState(false)
+    const [deleteDialogOpened, setDeleteDialogOpened] = useState(false)
     const [deletedID, setDeletedID] = useState('')
-
-    const [editDialogOpend, setEditDialogOpened] = useState(false)
-    const [editedLabels, setEditedLabels] = useState<Employee>()
+    const [editedEmployee, setEditedEmployee] = useState<Employee>()
+    const [editDialogOpened, setEditDialogOpened] = useState(false)
 
     const openDeleteDialog = (deletedID: any) => {
         setDeletedID(deletedID)
@@ -41,7 +39,9 @@ const Employees: React.FC<Props> = ({ user }) => {
     }
 
     const openEditDialog = (editLabel: any) => {
-        setEditedLabels(editLabel.row)
+        console.log(editLabel);
+
+        setEditedEmployee({ ...editLabel.row, id: editLabel.id as number })
         setEditDialogOpened(true)
     }
 
@@ -54,7 +54,6 @@ const Employees: React.FC<Props> = ({ user }) => {
         let res: CodePayload = { code: CodeType.OK, message: `employee with id=${deletedID} was deleted` }
         try {
             await employeesService.deleteEmployee(deletedID)
-            // setUpdate(!update)
         } catch (error: any) {
             if ((typeof (error) == 'string') && error.includes('Authentication')) {
                 res.code = CodeType.AUTH_ERROR
@@ -70,7 +69,8 @@ const Employees: React.FC<Props> = ({ user }) => {
     }
 
     const editUser = async (employee: Employee) => {
-        let res: CodePayload = { code: CodeType.OK, message: `employee with id=${deletedID} was edited` }
+
+        let res: CodePayload = { code: CodeType.OK, message: `employee with id=${employee.id} was edited` }
         let editedEmployee = null;
         try {
             editedEmployee = await employeesService.updateEmployee(employee)
@@ -84,13 +84,11 @@ const Employees: React.FC<Props> = ({ user }) => {
             }
             res.message = error
         }
-        console.log(res);
-        
+
         dispatch(codeActions.set(res))
         closeEditDialog();
         const result: InputResult = { status: editedEmployee ? "success" : "error", message: res.message }
-        console.log(result);
-        
+
         return result
     }
 
@@ -122,7 +120,6 @@ const Employees: React.FC<Props> = ({ user }) => {
     useEffect(() => {
         const subscription = employeesService.getEmployees().subscribe({
             next(emplArray: Employee[] | string) {
-                console.log(emplArray);
 
                 if (typeof emplArray === 'string') {
 
@@ -146,9 +143,27 @@ const Employees: React.FC<Props> = ({ user }) => {
         <Box sx={{ height: '50vh', width: '80vw' }}>
             <DataGrid columns={getColumns(user?.role ? user.role : '')} rows={employees} />
         </Box>
-        {deleteDialogOpend && <Confirm title={"Delete employee"} question={"Are you shure?"} submitFn={deleteUser} closeFn={closeDeleteDialog}></Confirm>}
-        {editDialogOpend && <EditEmployee title={"Edit employee"} submitFn={editUser} closeFn={closeEditDialog} labels={editedLabels!}></EditEmployee>}
-    </Box>)
+        <Modal open={deleteDialogOpened} >
+            <Box>
+                <Confirm title={"Delete employee"} question={"Are you shure?"} submitFn={deleteUser} closeFn={closeDeleteDialog}></Confirm>
+            </Box>
+        </Modal>
+        <Modal open={editDialogOpened} onClose={closeEditDialog}>
+            <Box sx={{
+                position: 'absolute' as 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 400,
+                bgcolor: 'background.paper',
+                border: '2px solid #000',
+                boxShadow: 24,
+                p: 4,
+            }}>
+                <EmployeeForm submitFn={editUser} employeeToUpdate={editedEmployee} ></EmployeeForm>
+            </Box>
+        </Modal >
+    </Box >)
 }
 
 export default Employees

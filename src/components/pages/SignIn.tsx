@@ -25,7 +25,6 @@ const SignIn: React.FC = () => {
         } catch (error) {
 
         }
-        console.log(inputResult);
         
         return inputResult;
     }
