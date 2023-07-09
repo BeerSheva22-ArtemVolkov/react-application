@@ -28,6 +28,7 @@ const NavigatorPortrait: React.FC<{ routes: RouteType[] }> = ({ routes }) => {
 
     useEffect(() => {
         let index = routes.findIndex(r => r.to === location.pathname)
+        
         if (index < 0) {
             index = 0;
         }

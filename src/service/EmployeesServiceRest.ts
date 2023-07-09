@@ -38,18 +38,16 @@ export default class EmployeesServiceRest implements EmployeesService {
     constructor(private url: string) { }
 
     addEmployee(employee: Employee): Promise<Employee> {
-        return this.sendRequest("POST", '', JSON.stringify({ ...employee, userId: "admin" }))
+        return this.fetchRequest("POST", '', JSON.stringify({ ...employee, userId: "admin" }))
     }
 
     deleteEmployee(employeeID: any): Promise<void> {
-        return this.sendRequest("DELETE", `/${employeeID}`)
+        return this.fetchRequest("DELETE", `/${employeeID}`)
     }
 
     async updateEmployee(employee: Employee): Promise<Employee> {
-        const response = await this.sendRequest("PUT", `/${employee.id}`, JSON.stringify({ ...employee, userId: "admin" }))
-        console.log(response);
-        
-        return this.sendRequest("PUT", `/${employee.id}`, JSON.stringify({ ...employee, userId: "admin" }))
+        const response = await this.fetchRequest("PUT", `/${employee.id}`, JSON.stringify({ ...employee, userId: "admin" }))       
+        return this.fetchRequest("PUT", `/${employee.id}`, JSON.stringify({ ...employee, userId: "admin" }))
     }
 
     getEmployees(): Observable<Employee[] | string> {
@@ -77,7 +75,7 @@ export default class EmployeesServiceRest implements EmployeesService {
 
     private async startEmployeesSubscription(subscriber: Subscriber<string | Employee[]>) {
 
-        this.sendRequest("GET", '')
+        this.fetchRequest("GET", '')
             .then(async (employees: Promise<Employee[]>) => {
                 const empls = await employees;
                 empls.map(employee => ({ ...employee, birthDate: new Date(employee.birthDate) }))
@@ -98,7 +96,7 @@ export default class EmployeesServiceRest implements EmployeesService {
 
     }
 
-    private async sendRequest(method: string, path: string, body?: string): Promise<any> {
+    private async fetchRequest(method: string, path: string, body?: string): Promise<any> {
 
         const token = localStorage.getItem(AUTH_DATA_JWT);
         const headers: HeadersInit = {
@@ -114,7 +112,7 @@ export default class EmployeesServiceRest implements EmployeesService {
                 headers,
                 body
             })
-            if (!response.ok) {
+            if (!response.ok) {                
                 throw this.getErrorMsg(response.status, response.statusText);
             }
             return response.json()
@@ -130,6 +128,7 @@ export default class EmployeesServiceRest implements EmployeesService {
     private getErrorMsg(status: number, statusText: string): string {
         let errorMsg: string = ''
         switch (status) {
+            case 401:
             case 403: {
                 errorMsg = "Authentication";
                 break;
@@ -141,8 +140,7 @@ export default class EmployeesServiceRest implements EmployeesService {
             default: {
                 errorMsg = statusText
             }
-        }
-
+        }        
         return errorMsg
     }
 

@@ -39,8 +39,6 @@ const Employees: React.FC<Props> = ({ user }) => {
     }
 
     const openEditDialog = (editLabel: any) => {
-        console.log(editLabel);
-
         setEditedEmployee({ ...editLabel.row, id: editLabel.id as number })
         setEditDialogOpened(true)
     }
@@ -121,10 +119,9 @@ const Employees: React.FC<Props> = ({ user }) => {
         const subscription = employeesService.getEmployees().subscribe({
             next(emplArray: Employee[] | string) {
 
-                if (typeof emplArray === 'string') {
-
-                    // if (emplArray.includes('Authentication')) {
-                    if (emplArray.includes('Unauthorized')) {
+                if (typeof emplArray === 'string') {                    
+                    if (emplArray.includes('Authentication')) {
+                    // if (emplArray.includes('Unauthorized')) {
                         dispatch(codeActions.set({ message: emplArray, code: CodeType.AUTH_ERROR }))
                         dispatch(authActions.reset())
                     } else {
