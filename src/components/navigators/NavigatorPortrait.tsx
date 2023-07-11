@@ -4,7 +4,7 @@ import { Menu } from '@mui/icons-material'
 import { AppBar, IconButton, ListItem, Toolbar, Typography, Drawer, List, Box } from '@mui/material';
 import { RouteType } from './Navigator';
 
-const NavigatorPortrait: React.FC<{routes: RouteType[]}> = ({ routes }) => {
+const NavigatorPortrait: React.FC<{ routes: RouteType[] }> = ({ routes }) => {
 
     const [flOpen, setOpen] = useState<boolean>(false);
 
@@ -28,7 +28,7 @@ const NavigatorPortrait: React.FC<{routes: RouteType[]}> = ({ routes }) => {
         setOpen(!flOpen);
     }
     function getListItems(): React.ReactNode {
-        return routes.map(i => <ListItem onClick={toggleOpen} 
+        return routes.map(i => <ListItem onClick={toggleOpen}
             component={Link} to={i.to} key={i.to}>{i.label}</ListItem>)
     }
     return <Box sx={{ marginTop: { xs: "15vh", sm: "20vh" } }}>

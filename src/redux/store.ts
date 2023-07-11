@@ -8,8 +8,8 @@ import CodePayload from "../model/CodePayload";
 
 export const store = configureStore({
     reducer: {
-     authState: authReducer,
-     codeState: codeReducer
+        authState: authReducer,
+        codeState: codeReducer
     }
 });
 export function useSelectorAuth() {

@@ -1,7 +1,7 @@
-import { StatisticsType } from "../components/common/Statistics";
-import Employee from "../model/Employee";
-import { getAge } from "../util/date-functions";
-import { count } from "../util/number-functions";
+import { StatisticsType } from "../../components/common/Statistics";
+import Employee from "../../model/Employee";
+import { getAge } from "../../util/date-functions";
+import { count } from "../../util/number-functions";
 
 export function getStatistics(employees: Employee[], type: string, interval: number): StatisticsType {
     

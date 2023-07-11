@@ -1,6 +1,6 @@
 import {  useMemo, useState } from "react";
 import intervals from '../../config/intervals.json'
-import { getStatistics } from "../../service/EmployeesDataProcessor";
+import { getStatistics } from "../../service/crud/EmployeesDataProcessor";
 import Statistics from "../common/Statistics";
 import { useSelectorEmployees } from "../../hooks/hooks";
 const SalaryStatistics: React.FC = () => {

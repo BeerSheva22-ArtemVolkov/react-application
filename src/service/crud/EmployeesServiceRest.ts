@@ -1,8 +1,10 @@
 import { Observable, Subscriber } from "rxjs";
-import Employee from "../model/Employee";
-import { AUTH_DATA_JWT } from "./AuthServiceJwt";
+import Employee from "../../model/Employee";
+import { AUTH_DATA_JWT } from "../auth/AuthServiceJwt";
 import EmployeesService from "./EmployeesService";
+
 const POLLER_INTERVAL = 3000;
+
 class Cache {
     cacheString: string = '';
     set(employees: Employee[]): void {
@@ -28,8 +30,8 @@ function getResponseText(response: Response): string {
         res = status == 401 || status == 403 ? 'Authentication' : statusText;
     }
     return res;
-
 }
+
 function getHeaders(): HeadersInit {
     const res: HeadersInit = {
         'Content-Type': 'application/json',
@@ -37,6 +39,7 @@ function getHeaders(): HeadersInit {
     }
     return res;
 }
+
 async function fetchRequest(url: string, options: RequestInit, empl?: Employee): Promise<Response> {
     options.headers = getHeaders();
     if (empl) {
@@ -48,7 +51,7 @@ async function fetchRequest(url: string, options: RequestInit, empl?: Employee):
     try {
         if (options.method == "DELETE" || options.method == "PUT") {
             flUpdate = false;
-            await fetchRequest(url, {method: "GET"});
+            await fetchRequest(url, { method: "GET" });
             flUpdate = true;
         }
 
@@ -65,15 +68,18 @@ async function fetchRequest(url: string, options: RequestInit, empl?: Employee):
         throw responseText ? responseText : "Server is unavailable. Repeat later on";
     }
 }
-async function fetchAllEmployees(url: string):Promise< Employee[]|string> {
+
+async function fetchAllEmployees(url: string): Promise<Employee[] | string> {
     const response = await fetchRequest(url, {});
     return await response.json()
 }
 
 export default class EmployeesServiceRest implements EmployeesService {
+
     private observable: Observable<Employee[] | string> | null = null;
     private cache: Cache = new Cache();
     constructor(private url: string) { }
+    
     async updateEmployee(empl: Employee): Promise<Employee> {
         const response = await fetchRequest(this.getUrlWithId(empl.id!),
             { method: 'PUT' }, empl);
@@ -85,21 +91,21 @@ export default class EmployeesServiceRest implements EmployeesService {
         return `${this.url}/${id}`;
     }
     private sibscriberNext(url: string, subscriber: Subscriber<Employee[] | string>): void {
-        
+
         fetchAllEmployees(url).then(employees => {
             if (this.cache.isEmpty() || !this.cache.isEqual(employees as Employee[])) {
                 this.cache.set(employees as Employee[]);
                 subscriber.next(employees);
             }
-            
+
         })
-        .catch(error => subscriber.next(error));
+            .catch(error => subscriber.next(error));
     }
     async deleteEmployee(id: any): Promise<void> {
-            const response = await fetchRequest(this.getUrlWithId(id), {
-                method: 'DELETE',
-            });
-            return await response.json();
+        const response = await fetchRequest(this.getUrlWithId(id), {
+            method: 'DELETE',
+        });
+        return await response.json();
     }
     getEmployees(): Observable<Employee[] | string> {
         let intervalId: any;
@@ -113,14 +119,14 @@ export default class EmployeesServiceRest implements EmployeesService {
         }
         return this.observable;
     }
-       
+
     async addEmployee(empl: Employee): Promise<Employee> {
-       
-            const response = await fetchRequest(this.url, {
-                method: 'POST',
-               }, {...empl, userId: "admin"} as any)
-           ;
-           return response.json();
+
+        const response = await fetchRequest(this.url, {
+            method: 'POST',
+        }, { ...empl, userId: "admin" } as any)
+            ;
+        return response.json();
 
     }
 
