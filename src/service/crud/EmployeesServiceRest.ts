@@ -27,6 +27,7 @@ function getResponseText(response: Response): string {
     let res = '';
     if (!response.ok) {
         const { status, statusText } = response;
+        //TODO Посмотреть как кидать текст ошибки в статус текст
         res = status == 401 || status == 403 ? 'Authentication' : statusText;
     }
     return res;
@@ -90,6 +91,7 @@ export default class EmployeesServiceRest implements EmployeesService {
     private getUrlWithId(id: any): string {
         return `${this.url}/${id}`;
     }
+    
     private sibscriberNext(url: string, subscriber: Subscriber<Employee[] | string>): void {
 
         fetchAllEmployees(url).then(employees => {

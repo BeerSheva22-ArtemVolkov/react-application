@@ -154,7 +154,7 @@ const Employees: React.FC = () => {
     function updateEmployee(empl: Employee): Promise<InputResult> {
         setFlEdit(false)
         setFlWatch(false)
-        
+
         const res: InputResult = { status: 'error', message: '' };
         if (JSON.stringify(employee.current) != JSON.stringify(empl)) {
             title.current = "Update Employee object?";

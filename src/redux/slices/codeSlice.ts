@@ -9,14 +9,13 @@ const codeSlice = createSlice({
     name: 'codeState',
     reducers: {
         set: (state, data) => {
-
             state.codeMessage = data.payload;
-            
         },
         reset: (state) => {
             state.codeMessage = initialState.codeMessage;
         }
     }
 });
+
 export const codeActions = codeSlice.actions;
 export const codeReducer = codeSlice.reducer;
