@@ -2,10 +2,7 @@ import { Observable, Subscriber } from "rxjs";
 import Employee from "../../model/Employee";
 import { AUTH_DATA_JWT } from "../auth/AuthServiceJwt";
 import EmployeesService from "./EmployeesService";
-import { CompatClient, Stomp } from "@stomp/stompjs";
-import NotifierType from "../../model/NotifierType";
-
-const TOPIC: string = "/topic/employees"
+import NotifierType from "../../model/NotifierType"
 
 class Cache {
 
@@ -21,7 +18,7 @@ class Cache {
 
     updateCache(id: number, empl: Employee) {
         console.log(id, empl);
-        
+
         this.cache.set(id, empl);
     }
 
@@ -99,14 +96,13 @@ export default class EmployeesServiceRest implements EmployeesService {
     private subscriber: Subscriber<string | Employee[]> | undefined;
     private urlService: string;
     private urlWebSocket: string;
-    private stompClient: CompatClient;
-    private cache: Cache;
+    private webSocket: WebSocket | undefined;
+    // private cache: Cache;
 
     constructor(baseUrl: string) {
-        this.urlService = `http://${baseUrl}/employees`
-        this.urlWebSocket = `ws://${baseUrl}/websocket/employees`
-        this.stompClient = Stomp.client(this.urlWebSocket);
-        this.cache = new Cache;
+        this.urlService = `http://${baseUrl}`
+        this.urlWebSocket = `ws://${baseUrl}/websocket`
+        // this.cache = new Cache;
     }
 
     async updateEmployee(empl: Employee): Promise<Employee> {
@@ -122,7 +118,7 @@ export default class EmployeesServiceRest implements EmployeesService {
     private subscriberNext(): void {
         fetchAllEmployees(this.urlService).then(employees => {
             this.subscriber?.next(employees);
-            this.cache.setCache(employees as Employee[]);
+            // this.cache.setCache(employees as Employee[]);
         }).catch(error => this.subscriber?.next(error));
     }
 
@@ -145,39 +141,21 @@ export default class EmployeesServiceRest implements EmployeesService {
     }
 
     private connectWS() {
-
-        this.stompClient.connect(
-            {},
-            () => {
-                this.stompClient?.subscribe(TOPIC, message => {
-                    const notifierObj: NotifierType = JSON.parse(message.body)
-                    
-                    switch (notifierObj.actionType) {
-                        case "ADD":
-                            this.cache.addToCache(notifierObj.object.id, notifierObj.object as Employee)
-                            break; 
-                        case "DELETE":
-                            this.cache.deleteFromCache(notifierObj.object)
-                            break;
-                        case "UPDATE":
-                            this.cache.updateCache(notifierObj.object.id, notifierObj.object as Employee)
-                            break;
-                        default:
-                            break;
-                    }                    
-                    this.subscriber?.next(this.cache.getCache());
-                })
-            },
-            (error: any) => this.subscriber?.next(JSON.stringify(error)),
-            () => console.log("websocket disconnected")
-        );
+        this.webSocket = new WebSocket(this.urlWebSocket, localStorage.getItem(AUTH_DATA_JWT) || '');
+        this.webSocket.onmessage = message => { // listener
+            console.log(message.data);
+            this.subscriberNext();            
+        }
     }
 
     private disconnectWS(): void {
-        this.stompClient?.disconnect();
+        this.webSocket?.close();
     }
 
     async addEmployee(empl: Employee): Promise<Employee> {
+        if (empl.id == 0) {
+            delete empl.id;
+        }
         const response = await fetchRequest(this.urlService, {
             method: 'POST',
         }, empl);
