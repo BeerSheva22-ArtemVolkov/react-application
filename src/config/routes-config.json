@@ -10,32 +10,10 @@
             "to": "/signout",
             "label": "Sign Out",
             "order": 1000
-        },
-        {
-            "to": "/statistics/age",
-            "label": "Age Statistics",
-            "order": 100
-        },
-        {
-            "to": "/statistics/salary",
-            "label": "Salary Statistics",
-            "order": 100
         }
     ],
-    "admin": [
-        {
-            "to": "/employees/add",
-            "label": "Add Employee",
-            "order": 2
-        }
-    ],
-    "development": [
-        {
-            "to": "/generation",
-            "label": "Generate Employees",
-            "order": 20
-        }
-    ],
+    "admin": [],
+    "development": [],
     "noadmin": [],
     "noauthenticated": [
         {

@@ -4,8 +4,6 @@ type Employee = {
     name: string,
     department: string,
     salary: number,
-    gender: 'male'|'female'
-
-
+    gender: 'male' | 'female'
 }
 export default Employee;

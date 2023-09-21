@@ -10,9 +10,6 @@ import NotFound from "./components/pages/NotFound";
 import { RouteType } from "./components/navigators/Navigator";
 import UserData from "./model/UserData";
 import Employees from "./components/pages/Employees";
-import AddEmployee from "./components/pages/AddEmployee";
-import AgeStatistics from "./components/pages/AgeStatistics";
-import SalaryStatistics from "./components/pages/SalaryStatistics";
 import { StatusType } from "./model/StatusType";
 import CodeType from "./model/CodeType";
 import { useDispatch } from "react-redux";
@@ -20,7 +17,6 @@ import { authActions } from "./redux/slices/authSlice";
 import { authService } from "./config/service-config";
 import { Alert, Snackbar } from "@mui/material";
 import { codeActions } from "./redux/slices/codeSlice";
-import Generation from "./components/pages/Generation";
 
 const { always, authenticated, admin, noadmin, noauthenticated, development } = routesConfig;
 type RouteTypeOrder = RouteType & { order?: number }
@@ -79,13 +75,8 @@ const App: React.FC = () => {
         <Routes>
             <Route path="/" element={<NavigatorDispatcher routes={routes} />}>
                 <Route index element={<Employees />} />
-                <Route path="employees/add" element={<AddEmployee />} />
-                <Route path="statistics/age" element={<AgeStatistics />} />
-                <Route path="statistics/salary" element={<SalaryStatistics />} />
-
                 <Route path="signin" element={<SignIn />} />
                 <Route path="signout" element={<SignOut />} />
-                <Route path="generation" element={<Generation />} />
                 <Route path="/*" element={<NotFound />} />
             </Route>
         </Routes>
