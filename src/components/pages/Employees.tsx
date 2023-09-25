@@ -1,15 +1,17 @@
-import { Box, Modal, useMediaQuery, useTheme } from "@mui/material"
-import { useState, useRef, useMemo } from "react";
-import Employee from "../../model/Employee";
+import { AppBar, Box, Button, CssBaseline, Divider, Drawer, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Modal, TextField, Toolbar, Typography, styled, useMediaQuery, useTheme } from "@mui/material"
+import { useState, useRef, useMemo, useEffect } from "react";
+// import Employee from "../../model/Employee";
 import { employeesService } from "../../config/service-config";
 import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
 
-import { Delete, Edit, Man, Woman, Visibility } from "@mui/icons-material";
+import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft } from "@mui/icons-material";
 import { useSelectorAuth } from "../../redux/store";
 import { Confirmation } from "../common/Confirmation";
 import { EmployeeForm } from "../forms/EmployeeForm";
 import InputResult from "../../model/InputResult";
 import { useDispatchCode, useSelectorEmployees } from "../../hooks/hooks";
+import Message from "../common/Message";
+// import { useDispatchCode } from "../../hooks/hooks";
 
 const columnsCommon: GridColDef[] = [
     {
@@ -55,176 +57,269 @@ const style = {
     p: 4,
 };
 
+let drawerWidth = 240
+
 const Employees: React.FC = () => {
 
-    const columnsAdmin: GridColDef[] = [
-        {
-            field: 'actions', type: "actions", getActions: (params) => {
-                return [
-                    <GridActionsCellItem label="remove" icon={<Delete />}
-                        onClick={() => removeEmployee(params.id)
-                        } />,
-                    <GridActionsCellItem label="update" icon={<Edit />}
-                        onClick={() => {
-                            employeeId.current = params.id as any;
-                            if (params.row) {
-                                const empl = params.row;
-                                empl && (employee.current = empl);
-                                setFlEdit(true)
-                            }
-                        }} />
-                ];
-            }
-        }
-    ]
+    const [open, setOpen] = useState<boolean>(true);
 
-    const columnDetails: GridColDef[] =
-        [{
-            field: 'details', type: "actions", headerName: 'Details', getActions: (params) => {
-                return [
-                    <GridActionsCellItem label="details" icon={<Visibility />}
-                        onClick={() => {
-                            employeeId.current = params.id as any;
-                            if (params.row) {
-                                const empl = params.row;
-                                empl && (employee.current = empl);
-                                setWatchMode(userData ? userData.role : '')
-                                setFlWatch(true)
-                            }
-                        }} />
-                ];
-            }
-        }]
+    const handleDrawerToggle = () => {
+        setOpen(!open);
+        drawerWidth = open ? 240 : 60
+    };
+
+    // const columnsAdmin: GridColDef[] =
+    //     [{
+    //         field: 'actions', type: "actions", getActions: (params) => {
+    //             return [
+    //                 <GridActionsCellItem label="remove" icon={<Delete />}
+    //                     onClick={() => removeEmployee(params.id)
+    //                     } />,
+    //                 <GridActionsCellItem label="update" icon={<Edit />}
+    //                     onClick={() => {
+    //                         employeeId.current = params.id as any;
+    //                         if (params.row) {
+    //                             const empl = params.row;
+    //                             empl && (employee.current = empl);
+    //                             setFlEdit(true)
+    //                         }
+    //                     }} />
+    //             ];
+    //         }
+    //     }]
+
+    // const columnDetails: GridColDef[] =
+    //     [{
+    //         field: 'details', type: "actions", headerName: 'Details', getActions: (params) => {
+    //             return [
+    //                 <GridActionsCellItem label="details" icon={<Visibility />}
+    //                     onClick={() => {
+    //                         employeeId.current = params.id as any;
+    //                         if (params.row) {
+    //                             const empl = params.row;
+    //                             empl && (employee.current = empl);
+    //                             setWatchMode(userData ? userData.role : '')
+    //                             setFlWatch(true)
+    //                         }
+    //                     }} />
+    //             ];
+    //         }
+    //     }]
 
 
     const dispatch = useDispatchCode();
     const userData = useSelectorAuth();
-    const employees = useSelectorEmployees();
+    const newestMessage = useSelectorEmployees();
     const theme = useTheme();
     const isPortrait = useMediaQuery(theme.breakpoints.down('md'));
-    const columns = useMemo(() => getColumns(), [userData, employees, isPortrait]);
+    // const columns = useMemo(() => getColumns(), [userData, employees, isPortrait]);
 
     const [openConfirm, setOpenConfirm] = useState(false);
     const [openEdit, setFlEdit] = useState(false);
     const [openWatch, setFlWatch] = useState(false);
+    const [wsMessage, setWSMessage] = useState<String>('');
+    const [messages, setMessages] = useState<any[]>([])
 
     const title = useRef('');
     const content = useRef('');
     const employeeId = useRef('');
     const confirmFn = useRef<any>(null);
-    const employee = useRef<Employee | undefined>();
+    // const employee = useRef<Employee | undefined>();
     const [watchMode, setWatchMode] = useState<string>('')
 
-    function getColumns(): GridColDef[] {
-        let res: GridColDef[] = columnsCommon;
-        if (!isPortrait) {
-            res = res.concat(columnsPortrait);
-            if (userData && userData.role == 'admin') {
-                res = res.concat(columnsAdmin);
-            }
-        } else {
-            res = res.concat(columnDetails);
-        }
-
-        return res;
+    async function getMessages() {
+        const data = await employeesService.getFromChat("TelRan", "", "group")
+        return data;
     }
 
-    function removeEmployee(id: any) {
-        title.current = "Remove Employee object?";
-        const employee = employees.find(empl => empl.id == id);
-        content.current = `You are going remove employee with id ${employee?.id}`;
-        employeeId.current = id;
-        confirmFn.current = actualRemove;
-        setOpenConfirm(true);
-    }
+    useEffect(() => {
+        getMessages().then(messages => setMessages(messages));
+    }, [newestMessage])
 
-    async function actualRemove(isOk: boolean) {
-        let errorMessage: string = '';
-        if (isOk) {
-            try {
-                await employeesService.deleteEmployee(employeeId.current);
-            } catch (error: any) {
-                errorMessage = error;
-            }
-        }
-        dispatch(errorMessage, '');
-        setOpenConfirm(false);
-    }
+    // function getColumns(): GridColDef[] {
+    //     let res: GridColDef[] = columnsCommon;
+    //     if (!isPortrait) {
+    //         res = res.concat(columnsPortrait);
+    //         if (userData && userData.role == 'admin') {
+    //             res = res.concat(columnsAdmin);
+    //         }
+    //     } else {
+    //         res = res.concat(columnDetails);
+    //     }
 
-    function updateEmployee(empl: Employee): Promise<InputResult> {
-        setFlEdit(false)
-        setFlWatch(false)
+    //     return res;
+    // }
 
-        const res: InputResult = { status: 'error', message: '' };
-        if (JSON.stringify(employee.current) != JSON.stringify(empl)) {
-            title.current = "Update Employee object?";
-            employee.current = empl;
-            content.current = `You are going update employee with id ${empl.id}`;
-            confirmFn.current = actualUpdate;
-            setOpenConfirm(true);
-        }
-        return Promise.resolve(res);
-    }
+    // function removeEmployee(id: any) {
+    //     title.current = "Remove Employee object?";
+    //     const employee = employees.find(empl => empl.id == id);
+    //     content.current = `You are going remove employee with id ${employee?.id}`;
+    //     employeeId.current = id;
+    //     confirmFn.current = actualRemove;
+    //     setOpenConfirm(true);
+    // }
 
-    async function actualUpdate(isOk: boolean) {
+    // async function actualRemove(isOk: boolean) {
+    //     let errorMessage: string = '';
+    //     if (isOk) {
+    //         try {
+    //             await employeesService.deleteEmployee(employeeId.current);
+    //         } catch (error: any) {
+    //             errorMessage = error;
+    //         }
+    //     }
+    //     dispatch(errorMessage, '');
+    //     setOpenConfirm(false);
+    // }
 
-        let errorMessage: string = '';
+    // function updateEmployee(empl: Employee): Promise<InputResult> {
+    //     setFlEdit(false)
+    //     setFlWatch(false)
 
-        if (isOk) {
-            try {
-                await employeesService.updateEmployee(employee.current!);
-            } catch (error: any) {
-                errorMessage = error
-            }
-        }
-        dispatch(errorMessage, '');
-        setOpenConfirm(false);
-    }
+    //     const res: InputResult = { status: 'error', message: '' };
+    //     if (JSON.stringify(employee.current) != JSON.stringify(empl)) {
+    //         title.current = "Update Employee object?";
+    //         employee.current = empl;
+    //         content.current = `You are going update employee with id ${empl.id}`;
+    //         confirmFn.current = actualUpdate;
+    //         setOpenConfirm(true);
+    //     }
+    //     return Promise.resolve(res);
+    // }
 
-    return <Box sx={{
-        display: 'flex', justifyContent: 'center',
-        alignContent: 'center'
-    }}>
-        <Box sx={{ height: '80vh', width: '95vw' }}>
-            <DataGrid columns={columns} rows={employees} />
-        </Box>
-        <Confirmation confirmFn={confirmFn.current} open={openConfirm}
-            title={title.current} content={content.current}></Confirmation>
-        <Modal
-            open={openEdit}
-            onClose={() => {
-                setFlEdit(false)
-            }}
-            aria-labelledby="modal-modal-title"
+    // async function actualUpdate(isOk: boolean) {
+
+    //     let errorMessage: string = '';
+
+    //     if (isOk) {
+    //         try {
+    //             await employeesService.updateEmployee(employee.current!);
+    //         } catch (error: any) {
+    //             errorMessage = error
+    //         }
+    //     }
+    //     dispatch(errorMessage, '');
+    //     setOpenConfirm(false);
+    // }
+
+    return <Box sx={{ display: 'flex' }}>
+        {/* <CssBaseline /> */}
+        {/* <AppBar
+            position="fixed"
+            sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
         >
-            <Box sx={style}>
-                <EmployeeForm
-                    submitFn={updateEmployee}
-                    employeeUpdated={employee.current}
-                />
-            </Box>
-        </Modal>
-        <Modal
-            open={openWatch}
-            onClose={() => {
-                setFlWatch(false)
-                setWatchMode('')
+            <Toolbar>
+                <Typography variant="h6" noWrap component="div">
+                    Permanent drawer
+                </Typography>
+            </Toolbar>
+        </AppBar> */}
+        <Drawer
+            // open={open}
+            sx={{
+                zIndex: 0,
+                width: drawerWidth,
+                flexShrink: 0,
+                '& .MuiDrawer-paper': {
+                    width: drawerWidth,
+                    boxSizing: 'border-box',
+                    overflowY: "inherit",
+                },
             }}
-            aria-labelledby="modal-modal-title"
+            variant="permanent"
+            anchor="left"
         >
-            <Box sx={style}>
-                <EmployeeForm
-                    submitFn={updateEmployee}
-                    employeeUpdated={employee.current}
-                    watchMode={watchMode}
-                    deleteFn={() => {
-                        removeEmployee(employee.current!.id)
-                        setFlWatch(false)
-                    }} />
-            </Box>
-        </Modal>
 
+            <Toolbar />
+            <Divider />
+            <IconButton onClick={handleDrawerToggle}>
+                {open ? <ChevronRight /> : <ChevronLeft />}
+            </IconButton>
+            <List>
+                {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
+                    <ListItem key={text} disablePadding>
+                        <ListItemButton sx={{
+                            minHeight: 48,
+                            justifyContent: open ? 'initial' : 'center',
+                            px: 2.5,
+                        }}>
+                            <ListItemIcon sx={{
+                                minWidth: 0,
+                                mr: open ? 3 : 'auto',
+                                justifyContent: 'center',
+                            }}>
+                                {index % 2 === 0 ? <Delete /> : <Edit />}
+                            </ListItemIcon>
+                            <ListItemText primary={text} sx={{ opacity: open ? 0 : 1 }} />
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+            <Divider />
+            <List>
+                {['All mail', 'Trash', 'Spam'].map((text, index) => (
+                    <ListItem key={text} disablePadding>
+                        <ListItemButton sx={{
+                            minHeight: 48,
+                            justifyContent: open ? 'initial' : 'center',
+                            px: 2.5,
+                        }}>
+                            <ListItemIcon sx={{
+                                minWidth: 0,
+                                mr: open ? 3 : 'auto',
+                                justifyContent: 'center',
+                            }}>
+                                {index % 2 === 0 ? <Delete /> : <Edit />}
+                            </ListItemIcon>
+                            <ListItemText primary={text} sx={{ opacity: open ? 0 : 1 }} />
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+        </Drawer>
+        <Box
+            component="main"
+            sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
+        >
+            <Box component="main" sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+                {/* <Message mes={newestMessage}></Message> */}
+                {(messages).map((message) => (
+                    <Message mes={message} key={message._id} />
+                ))}
+            </Box>
+            <Box sx={{ p: 2, backgroundColor: "background.default" }}>
+                <Grid container spacing={2}>
+                    <Grid item xs={10}>
+                        <TextField
+                            size="small"
+                            fullWidth
+                            placeholder="Type a message"
+                            variant="outlined"
+                            value={wsMessage}
+                            onChange={(e) => setWSMessage(e.target.value)}
+                        />
+                    </Grid>
+                    <Grid item xs={2}>
+                        <Button
+                            fullWidth
+                            color="primary"
+                            variant="contained"
+                            endIcon={<Send />}
+                            onClick={() => {
+                                employeesService.sendWSMessage(wsMessage)
+                                setWSMessage("")
+                            }}
+                        >
+                            Send
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Box>
+        </Box >
     </Box>
+
+
+
 }
 
 export default Employees;

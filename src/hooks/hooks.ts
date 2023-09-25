@@ -2,7 +2,7 @@ import { useDispatch } from "react-redux";
 import CodeType from "../model/CodeType";
 import { codeActions } from "../redux/slices/codeSlice";
 import { useEffect, useState } from "react";
-import Employee from "../model/Employee";
+// import Employee from "../model/Employee";
 import { Subscription } from "rxjs";
 import { employeesService } from "../config/service-config";
 
@@ -25,23 +25,36 @@ export function useDispatchCode() {
 
 export function useSelectorEmployees() {
     const dispatch = useDispatchCode();
-    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [newMessage, setNewMessage] = useState<String>('');
 
     useEffect(() => {
-        const subscription: Subscription = employeesService.getEmployees()
+        const subscription: Subscription = employeesService.getNewewst()
             .subscribe({
-                next(emplArray: Employee[] | string) {
+                next(message: string) {
                     let errorMessage: string = '';
-                    if (typeof emplArray === 'string') {
-                        errorMessage = emplArray;
-                    } else {
-                        setEmployees(emplArray.map(e => ({ ...e, birthDate: new Date(e.birthDate) })));
-                    }
+                    setNewMessage(message);
                     dispatch(errorMessage, '');
                 }
             });
         return () => subscription.unsubscribe();
     }, []);
-    return employees;
+    return newMessage;
 }
 
+export function useSelectorChats() {
+    const dispatch = useDispatchCode();
+    const [groups, setGroups] = useState<string>('');
+
+    useEffect(() => {
+        const subscription: Subscription = employeesService.getNewewst()
+            .subscribe({
+                next(message: string) {
+                    let errorMessage: string = '';
+                    setGroups(message);
+                    dispatch(errorMessage, '');
+                }
+            });
+        return () => subscription.unsubscribe();
+    }, []);
+    return groups;
+}
