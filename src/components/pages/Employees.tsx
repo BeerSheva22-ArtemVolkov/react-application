@@ -1,4 +1,4 @@
-import { AppBar, Box, Button, CssBaseline, Divider, Drawer, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Modal, TextField, Toolbar, Typography, styled, useMediaQuery, useTheme } from "@mui/material"
+import { AppBar, Avatar, Box, Button, CssBaseline, Divider, Drawer, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Modal, TextField, Toolbar, Typography, styled, useMediaQuery, useTheme } from "@mui/material"
 import { useState, useRef, useMemo, useEffect } from "react";
 // import Employee from "../../model/Employee";
 import { employeesService } from "../../config/service-config";
@@ -118,7 +118,9 @@ const Employees: React.FC = () => {
     const [openEdit, setFlEdit] = useState(false);
     const [openWatch, setFlWatch] = useState(false);
     const [wsMessage, setWSMessage] = useState<String>('');
-    const [messages, setMessages] = useState<any[]>([])
+    const [messages, setMessages] = useState<any[]>([]);
+    const [groups, setGroups] = useState<any[]>([]);
+    const [personal, setPersonal] = useState<any[]>([]);
 
     const title = useRef('');
     const content = useRef('');
@@ -127,14 +129,22 @@ const Employees: React.FC = () => {
     // const employee = useRef<Employee | undefined>();
     const [watchMode, setWatchMode] = useState<string>('')
 
-    async function getMessages() {
-        const data = await employeesService.getFromChat("TelRan", "", "group")
-        return data;
-    }
+    useEffect(() => {
+        employeesService.getGroups().then(group => {
+            setGroups(group.groups)
+            setPersonal(group.personal)
+        });
+    }, [])
+
+    const [selectedChat, setSelectedChat] = useState<string>(groups[0])
+    const [selectedChatType, setSelectedChatType] = useState<string>("group")
+    const [filterFrom, setFilterFrom] = useState<string>('')
+    const [includeFrom, setIncludeFrom] = useState<boolean>(false)
 
     useEffect(() => {
-        getMessages().then(messages => setMessages(messages));
-    }, [newestMessage])
+        employeesService.getFromChat(selectedChat, includeFrom, selectedChatType, filterFrom).then(messages => setMessages(messages));
+    }, [newestMessage, selectedChat])
+
 
     // function getColumns(): GridColDef[] {
     //     let res: GridColDef[] = columnsCommon;
@@ -236,8 +246,12 @@ const Employees: React.FC = () => {
                 {open ? <ChevronRight /> : <ChevronLeft />}
             </IconButton>
             <List>
-                {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-                    <ListItem key={text} disablePadding>
+                {personal.map((personalName, index) => (
+                    <ListItem key={personalName} disablePadding onClick={() => {
+                        setSelectedChat(personalName)
+                        selectedChatType != "to" && setSelectedChatType("to")
+                        setIncludeFrom(true)
+                    }}>
                         <ListItemButton sx={{
                             minHeight: 48,
                             justifyContent: open ? 'initial' : 'center',
@@ -250,15 +264,19 @@ const Employees: React.FC = () => {
                             }}>
                                 {index % 2 === 0 ? <Delete /> : <Edit />}
                             </ListItemIcon>
-                            <ListItemText primary={text} sx={{ opacity: open ? 0 : 1 }} />
+                            <ListItemText primary={personalName} sx={{ opacity: open ? 0 : 1 }} />
                         </ListItemButton>
                     </ListItem>
                 ))}
             </List>
             <Divider />
             <List>
-                {['All mail', 'Trash', 'Spam'].map((text, index) => (
-                    <ListItem key={text} disablePadding>
+                {groups.map((group, index) => (
+                    <ListItem key={group._id} disablePadding onClick={() => {
+                        setSelectedChat(group.chatName)
+                        selectedChatType != "group" && setSelectedChatType("group")
+                        setIncludeFrom(false)
+                    }}>
                         <ListItemButton sx={{
                             minHeight: 48,
                             justifyContent: open ? 'initial' : 'center',
@@ -269,9 +287,11 @@ const Employees: React.FC = () => {
                                 mr: open ? 3 : 'auto',
                                 justifyContent: 'center',
                             }}>
-                                {index % 2 === 0 ? <Delete /> : <Edit />}
+                                <Avatar sx={{ width: 24, height: 24 }}>
+                                    {group.chatName}
+                                </Avatar>
                             </ListItemIcon>
-                            <ListItemText primary={text} sx={{ opacity: open ? 0 : 1 }} />
+                            <ListItemText primary={group.chatName} sx={{ opacity: open ? 0 : 1 }} />
                         </ListItemButton>
                     </ListItem>
                 ))}
@@ -279,15 +299,16 @@ const Employees: React.FC = () => {
         </Drawer>
         <Box
             component="main"
-            sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
+            sx={{ flexGrow: 1, bgcolor: 'background.default' }}
+            height={'100%'}
         >
-            <Box component="main" sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+            <Box component="main" sx={{ flexGrow: 1, overflow: "auto", height: 'calc(80vh - 40px)' }}>
                 {/* <Message mes={newestMessage}></Message> */}
                 {(messages).map((message) => (
                     <Message mes={message} key={message._id} />
                 ))}
             </Box>
-            <Box sx={{ p: 2, backgroundColor: "background.default" }}>
+            <Box sx={{ p: 2, backgroundColor: "background.default", height: '40px' }}>
                 <Grid container spacing={2}>
                     <Grid item xs={10}>
                         <TextField
@@ -306,7 +327,7 @@ const Employees: React.FC = () => {
                             variant="contained"
                             endIcon={<Send />}
                             onClick={() => {
-                                employeesService.sendWSMessage(wsMessage)
+                                employeesService.sendWSMessage(wsMessage, selectedChatType == "to" ? selectedChat : '', selectedChatType == "group" ? selectedChat : '')
                                 setWSMessage("")
                             }}
                         >

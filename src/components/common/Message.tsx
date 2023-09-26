@@ -5,7 +5,7 @@ type Props = {
 }
 const AUTH_ITEM = "auth-item"
 
-const currentUser = JSON.parse(localStorage.getItem(AUTH_ITEM) || '');
+const currentUser = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
 
 const Message: React.FC<Props> = ({ mes }) => {
 

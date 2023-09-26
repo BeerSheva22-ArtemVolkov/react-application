@@ -4,6 +4,7 @@ import { AUTH_DATA_JWT } from "../auth/AuthServiceJwt";
 import EmployeesService from "./EmployeesService";
 import NotifierType from "../../model/NotifierType"
 
+const AUTH_ITEM = "auth-item"
 // class Cache {
 
 //     private cache: Map<number, Employee> = new Map();
@@ -39,6 +40,15 @@ import NotifierType from "../../model/NotifierType"
 //     }
 
 // }
+// let userName = ""
+// const token = localStorage.getItem(AUTH_DATA_JWT) || '';
+// if (token) {
+//     const jwtPayloadJSON = atob(token.split('.')[1]);
+//     const jwtPayloadObj = JSON.parse(jwtPayloadJSON);
+//     userName = jwtPayloadObj.sub;
+// }
+// const userName = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
+
 
 async function getResponseText(response: Response): Promise<string> {
     let res = '';
@@ -109,8 +119,13 @@ export default class EmployeesServiceRest implements EmployeesService {
         // this.cache = new Cache;
     }
 
-    sendWSMessage(message: any): void {
-        this.webSocket?.send(JSON.stringify({ group: "TelRan", "text": message }))
+    sendWSMessage(message: any, to: string, group: string): void {
+
+        this.webSocket?.send(JSON.stringify({
+            ...to && { to },
+            ...group && { group },
+            ...message && { text: message }
+        }))
     }
 
     // async updateEmployee(empl: Employee): Promise<Employee> {
@@ -149,41 +164,41 @@ export default class EmployeesServiceRest implements EmployeesService {
         // }).catch(error => this.subscriber?.next(error));
     }
 
-    getGroups(owner: string): Observable<any[]> {
-        let intervalId: any;
-        if (!this.chatsObservable) {
-            this.chatsObservable = new Observable<any[]>(subscriber => {
-                this.chatsSubscriber = subscriber;
-                this.subscriberNext(subscriber);
-                return () => this.disconnectWS();
-            })
-        }
-        return this.chatsObservable;
-    }
-
-    private subscriberNext(subscriber: Subscriber<any[] | string>): void {
-
-        fetchAllEmployees(url).then(employees => {
-            if (this.cache.isEmpty() || !this.cache.isEqual(employees as Employee[])) {
-                this.cache.set(employees as Employee[]);
-                subscriber.next(employees);
+    async getGroups(): Promise<any> {
+        const res = await fetch(this.urlService + "/groups", {
+            method: "GET",
+            // body: JSON.stringify(type == "to" ? { from, to: chatName } : { from, group: chatName }),
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
             }
-
-        }).catch(error => subscriber.next(error));
+        })
+        const data = await res.json();
+        return data;
     }
 
-    async getFromChat(chatName: string, from: string, type: string): Promise<any> {
-        console.log(chatName, from, type);
-
+    async getFromChat(chatName: string, includeFrom: boolean, type: string, filterFrom: string): Promise<any> {
+        // 1.1  Если запрос для чата группы:
+        //      from-, chatName(group)+, 
+        // 1.2  Если запрос для чата группы с фильтром:
+        //      from-, chatName(group)+, filterFrom+-, dateTime(потом)+-
+        // 2.1  Если запрос для личной переписки:
+        //      from+, chatName(to)+,
+        // 2.2  Если запрос для личной переписки с фильтром:
+        //      from+, chatName(to)+, filterFrom+-, dateTime(потом)+-
+        const userName = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
+        console.log(userName);
+        
         const response = await fetch(this.urlService + "/messages", {
             method: "GET",
             // body: JSON.stringify(type == "to" ? { from, to: chatName } : { from, group: chatName }),
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || '',
-                "from": from,
+                "from": includeFrom ? userName.email : '',
                 "to": type == "to" ? chatName : '',
                 "group": type == "group" ? chatName : '',
+                "filter": filterFrom ? filterFrom : ''
             }
         });
         const data = await response.json();
@@ -194,12 +209,14 @@ export default class EmployeesServiceRest implements EmployeesService {
 
     private connectWS() {
 
-        const token = localStorage.getItem(AUTH_DATA_JWT) || '';
-        const jwtPayloadJSON = atob(token.split('.')[1]);
-        const jwtPayloadObj = JSON.parse(jwtPayloadJSON);
-        const userName = jwtPayloadObj.sub;
+        // const token = localStorage.getItem(AUTH_DATA_JWT) || '';
+        // const jwtPayloadJSON = atob(token.split('.')[1]);
+        // const jwtPayloadObj = JSON.parse(jwtPayloadJSON);
+        // const userName = jwtPayloadObj.sub;
+        const userName = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
+        console.log(userName);
 
-        this.webSocket = new WebSocket(`${this.urlWebSocket}/${userName}`, localStorage.getItem(AUTH_DATA_JWT) || '');
+        this.webSocket = new WebSocket(`${this.urlWebSocket}/${userName.email}`, localStorage.getItem(AUTH_DATA_JWT) || '');
         this.webSocket.onopen = () => {
             console.log('websocket connected');
         }

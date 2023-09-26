@@ -41,20 +41,20 @@ export function useSelectorEmployees() {
     return newMessage;
 }
 
-export function useSelectorChats() {
-    const dispatch = useDispatchCode();
-    const [groups, setGroups] = useState<string>('');
+// export function useSelectorChats() {
+//     const dispatch = useDispatchCode();
+//     const [groups, setGroups] = useState<string>('');
 
-    useEffect(() => {
-        const subscription: Subscription = employeesService.getNewewst()
-            .subscribe({
-                next(message: string) {
-                    let errorMessage: string = '';
-                    setGroups(message);
-                    dispatch(errorMessage, '');
-                }
-            });
-        return () => subscription.unsubscribe();
-    }, []);
-    return groups;
-}
+//     useEffect(() => {
+//         const subscription: Subscription = employeesService.getNewewst()
+//             .subscribe({
+//                 next(message: string) {
+//                     let errorMessage: string = '';
+//                     setGroups(message);
+//                     dispatch(errorMessage, '');
+//                 }
+//             });
+//         return () => subscription.unsubscribe();
+//     }, []);
+//     return groups;
+// }
