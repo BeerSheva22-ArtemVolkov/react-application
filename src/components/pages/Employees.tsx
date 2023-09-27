@@ -1,15 +1,16 @@
-import { AppBar, Avatar, Box, Button, CssBaseline, Divider, Drawer, Grid, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Modal, TextField, Toolbar, Typography, styled, useMediaQuery, useTheme } from "@mui/material"
+import { AppBar, Avatar, Badge, Box, Button, CssBaseline, Divider, Drawer, Grid, Icon, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Modal, TextField, Toolbar, Typography, styled, useMediaQuery, useTheme } from "@mui/material"
 import { useState, useRef, useMemo, useEffect } from "react";
 // import Employee from "../../model/Employee";
 import { employeesService } from "../../config/service-config";
 import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
 
-import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft } from "@mui/icons-material";
+import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft, GroupAdd } from "@mui/icons-material";
 import { useSelectorAuth } from "../../redux/store";
+
 import { Confirmation } from "../common/Confirmation";
 import { EmployeeForm } from "../forms/EmployeeForm";
 import InputResult from "../../model/InputResult";
-import { useDispatchCode, useSelectorEmployees } from "../../hooks/hooks";
+import { useDispatchCode, useSelectorActiveUsers, useSelectorEmployees } from "../../hooks/hooks";
 import Message from "../common/Message";
 // import { useDispatchCode } from "../../hooks/hooks";
 
@@ -110,6 +111,7 @@ const Employees: React.FC = () => {
     const dispatch = useDispatchCode();
     const userData = useSelectorAuth();
     const newestMessage = useSelectorEmployees();
+    const activeUsers = useSelectorActiveUsers();
     const theme = useTheme();
     const isPortrait = useMediaQuery(theme.breakpoints.down('md'));
     // const columns = useMemo(() => getColumns(), [userData, employees, isPortrait]);
@@ -121,6 +123,7 @@ const Employees: React.FC = () => {
     const [messages, setMessages] = useState<any[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
     const [personal, setPersonal] = useState<any[]>([]);
+    const [selectedIndex, setSelectedIndex] = useState<number>(0)
 
     const title = useRef('');
     const content = useRef('');
@@ -213,19 +216,7 @@ const Employees: React.FC = () => {
     // }
 
     return <Box sx={{ display: 'flex' }}>
-        {/* <CssBaseline /> */}
-        {/* <AppBar
-            position="fixed"
-            sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
-        >
-            <Toolbar>
-                <Typography variant="h6" noWrap component="div">
-                    Permanent drawer
-                </Typography>
-            </Toolbar>
-        </AppBar> */}
         <Drawer
-            // open={open}
             sx={{
                 zIndex: 0,
                 width: drawerWidth,
@@ -239,7 +230,6 @@ const Employees: React.FC = () => {
             variant="permanent"
             anchor="left"
         >
-
             <Toolbar />
             <Divider />
             <IconButton onClick={handleDrawerToggle}>
@@ -251,19 +241,32 @@ const Employees: React.FC = () => {
                         setSelectedChat(personalName)
                         selectedChatType != "to" && setSelectedChatType("to")
                         setIncludeFrom(true)
-                    }}>
+                        setSelectedIndex(index)
+                    }} >
                         <ListItemButton sx={{
                             minHeight: 48,
-                            justifyContent: open ? 'initial' : 'center',
+                            justifyContent: 'center',
                             px: 2.5,
+                            backgroundColor: index != selectedIndex ? 'white' : 'gray'
                         }}>
-                            <ListItemIcon sx={{
-                                minWidth: 0,
-                                mr: open ? 3 : 'auto',
-                                justifyContent: 'center',
-                            }}>
-                                {index % 2 === 0 ? <Delete /> : <Edit />}
-                            </ListItemIcon>
+                            <Badge badgeContent={0} color="info">
+                                <ListItemIcon sx={{
+                                    minWidth: 0,
+                                    justifyContent: 'center'
+                                }}>
+                                    <Badge
+                                        overlap="circular"
+                                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                        badgeContent={
+                                            <Avatar sx={{ width: 12, height: 12, backgroundColor: activeUsers.includes(personalName) ? 'green' : 'gray' }}>{""}</Avatar>
+                                        }
+                                    >
+                                        <Avatar sx={{ width: 36, height: 36 }}>
+                                            {personalName}
+                                        </Avatar>
+                                    </Badge>
+                                </ListItemIcon>
+                            </Badge>
                             <ListItemText primary={personalName} sx={{ opacity: open ? 0 : 1 }} />
                         </ListItemButton>
                     </ListItem>
@@ -276,18 +279,19 @@ const Employees: React.FC = () => {
                         setSelectedChat(group.chatName)
                         selectedChatType != "group" && setSelectedChatType("group")
                         setIncludeFrom(false)
+                        setSelectedIndex(index + personal.length)
                     }}>
-                        <ListItemButton sx={{
+                        <ListItemButton color="neutral" sx={{
                             minHeight: 48,
-                            justifyContent: open ? 'initial' : 'center',
+                            justifyContent: 'center',
                             px: 2.5,
+                            backgroundColor: index + personal.length != selectedIndex ? 'white' : 'gray'
                         }}>
                             <ListItemIcon sx={{
                                 minWidth: 0,
-                                mr: open ? 3 : 'auto',
                                 justifyContent: 'center',
                             }}>
-                                <Avatar sx={{ width: 24, height: 24 }}>
+                                <Avatar sx={{ width: 36, height: 36 }}>
                                     {group.chatName}
                                 </Avatar>
                             </ListItemIcon>
@@ -296,6 +300,22 @@ const Employees: React.FC = () => {
                     </ListItem>
                 ))}
             </List>
+            <Divider />
+            <Button sx={{
+                lineHeight: 0,
+                minWidth: 0,
+                height: 48,
+                justifyContent: 'center',
+                px: 2.5,
+                backgroundColor: 'white'
+            }}>
+                <Icon sx={{
+                    justifyContent: 'center',
+                }}>
+                    {<GroupAdd />}
+                </Icon>
+                <ListItemText primary={"Create new group"} sx={{ opacity: open ? 0 : 1 }} />
+            </Button>
         </Drawer>
         <Box
             component="main"

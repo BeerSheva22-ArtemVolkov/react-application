@@ -104,18 +104,21 @@ function getHeaders(): HeadersInit {
 export default class EmployeesServiceRest implements EmployeesService {
 
     private newestObservable: Observable<string> | null = null;
-    private chatsObservable: Observable<any[]> | null = null;
+    private activeObservable: Observable<any[]> | null = null;
+    // private chatsObservable: Observable<any[]> | null = null;
     // private allObservable: Observable<string> | null = null;
     private newestSubscriber: Subscriber<string> | undefined;
-    private chatsSubscriber: Subscriber<any[]> | undefined;
+    private activeSubscriber: Subscriber<any[]> | undefined;
+    // private chatsSubscriber: Subscriber<any[]> | undefined;
     private urlService: string;
     private urlWebSocket: string;
     private webSocket: WebSocket | undefined;
+    private globalWebSocket: WebSocket | undefined;
     // private cache: Cache;
 
     constructor(baseUrl: string) {
         this.urlService = `http://${baseUrl}`
-        this.urlWebSocket = `ws://${baseUrl}/contacts/websocket`
+        this.urlWebSocket = `ws://${baseUrl}`
         // this.cache = new Cache;
     }
 
@@ -145,7 +148,6 @@ export default class EmployeesServiceRest implements EmployeesService {
     // }
 
     getNewewst(): Observable<string> {
-
         if (!this.newestObservable) {
             this.newestObservable = new Observable<string>(subscriber => {
                 this.newestSubscriber = subscriber;
@@ -157,9 +159,28 @@ export default class EmployeesServiceRest implements EmployeesService {
         return this.newestObservable;
     }
 
+    getActive(): Observable<any[]> {
+        if (!this.activeObservable) {
+            this.activeObservable = new Observable<any[]>(subscriber => {
+                this.activeSubscriber = subscriber;
+                // this.subscriberNext();
+                this.connectGlobalWS();
+                return () => this.disconnectGlobalWS();
+            })
+        }
+        return this.activeObservable;
+    }
+
     private chatSubscriberNext(messageFromWS: any): void {
         // fetchAllEmployees(this.urlService).then(employees => {
         this.newestSubscriber?.next(messageFromWS);
+        // this.cache.setCache(employees as Employee[]);
+        // }).catch(error => this.subscriber?.next(error));
+    }
+
+    private globalSubscriberNext(activeUsers: any[]): void {
+        // fetchAllEmployees(this.urlService).then(employees => {
+        this.activeSubscriber?.next(activeUsers);
         // this.cache.setCache(employees as Employee[]);
         // }).catch(error => this.subscriber?.next(error));
     }
@@ -202,21 +223,14 @@ export default class EmployeesServiceRest implements EmployeesService {
             }
         });
         const data = await response.json();
-        console.log(data);
-
         return data
     }
 
     private connectWS() {
-
-        // const token = localStorage.getItem(AUTH_DATA_JWT) || '';
-        // const jwtPayloadJSON = atob(token.split('.')[1]);
-        // const jwtPayloadObj = JSON.parse(jwtPayloadJSON);
-        // const userName = jwtPayloadObj.sub;
         const userName = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
         console.log(userName);
 
-        this.webSocket = new WebSocket(`${this.urlWebSocket}/${userName.email}`, localStorage.getItem(AUTH_DATA_JWT) || '');
+        this.webSocket = new WebSocket(`${this.urlWebSocket}/contacts/websocket/${userName.email}`, localStorage.getItem(AUTH_DATA_JWT) || '');
         this.webSocket.onopen = () => {
             console.log('websocket connected');
         }
@@ -225,12 +239,28 @@ export default class EmployeesServiceRest implements EmployeesService {
             console.log(message.data);
             this.chatSubscriberNext(message.data);
         }
-        //
+    }
+
+    private connectGlobalWS() {        
+        this.globalWebSocket = new WebSocket(`${this.urlWebSocket}/global`);
+        this.globalWebSocket.onopen = () => {
+            console.log('websocket connected');
+        }
+
+        this.globalWebSocket.onmessage = message => { // listener
+            console.log(JSON.parse(message.data));
+            this.globalSubscriberNext(JSON.parse(message.data));
+        }
     }
 
     private disconnectWS(): void {
         this.webSocket?.close();
     }
+
+    private disconnectGlobalWS(): void {
+        this.globalWebSocket?.close();
+    }
+
 
     // async addEmployee(empl: Employee): Promise<Employee> {
     //     if (empl.id == 0) {

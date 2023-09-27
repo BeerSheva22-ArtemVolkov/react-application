@@ -2,7 +2,7 @@ import { useDispatch } from "react-redux";
 import CodeType from "../model/CodeType";
 import { codeActions } from "../redux/slices/codeSlice";
 import { useEffect, useState } from "react";
-// import Employee from "../model/Employee";
+// import Employee from "../model/Employee"; 
 import { Subscription } from "rxjs";
 import { employeesService } from "../config/service-config";
 
@@ -39,6 +39,24 @@ export function useSelectorEmployees() {
         return () => subscription.unsubscribe();
     }, []);
     return newMessage;
+}
+
+export function useSelectorActiveUsers() {
+    const dispatch = useDispatchCode();
+    const [activeUsers, setActiveUsers] = useState<any[]>([]);
+
+    useEffect(() => {
+        const subscription: Subscription = employeesService.getActive()
+            .subscribe({
+                next(users: any[]) {
+                    let errorMessage: string = '';
+                    setActiveUsers(users);
+                    dispatch(errorMessage, '');
+                }
+            });
+        return () => subscription.unsubscribe();
+    }, []);
+    return activeUsers;
 }
 
 // export function useSelectorChats() {
