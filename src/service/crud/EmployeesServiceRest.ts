@@ -198,7 +198,7 @@ export default class EmployeesServiceRest implements EmployeesService {
         return data;
     }
 
-    async getFromChat(chatName: string, includeFrom: boolean, type: string, filterFrom: string): Promise<any> {
+    async getFromChat(chatName: string, includeFrom: boolean, type: string, filterFrom: string, filterDateTimeFrom: string, filterDateTimeTo: string): Promise<any> {
         // 1.1  Если запрос для чата группы:
         //      from-, chatName(group)+, 
         // 1.2  Если запрос для чата группы с фильтром:
@@ -208,8 +208,6 @@ export default class EmployeesServiceRest implements EmployeesService {
         // 2.2  Если запрос для личной переписки с фильтром:
         //      from+, chatName(to)+, filterFrom+-, dateTime(потом)+-
         const userName = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
-        console.log(userName);
-        
         const response = await fetch(this.urlService + "/messages", {
             method: "GET",
             // body: JSON.stringify(type == "to" ? { from, to: chatName } : { from, group: chatName }),
@@ -219,7 +217,9 @@ export default class EmployeesServiceRest implements EmployeesService {
                 "from": includeFrom ? userName.email : '',
                 "to": type == "to" ? chatName : '',
                 "group": type == "group" ? chatName : '',
-                "filter": filterFrom ? filterFrom : ''
+                "filter": filterFrom ? filterFrom : '',
+                "dtf": filterDateTimeFrom ? filterDateTimeFrom : '',
+                "dtt": filterDateTimeTo ? filterDateTimeTo : ''
             }
         });
         const data = await response.json();
@@ -241,7 +241,7 @@ export default class EmployeesServiceRest implements EmployeesService {
         }
     }
 
-    private connectGlobalWS() {        
+    private connectGlobalWS() {
         this.globalWebSocket = new WebSocket(`${this.urlWebSocket}/global`);
         this.globalWebSocket.onopen = () => {
             console.log('websocket connected');

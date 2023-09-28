@@ -1,62 +1,19 @@
-import { AppBar, Avatar, Badge, Box, Button, CssBaseline, Divider, Drawer, Grid, Icon, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Modal, TextField, Toolbar, Typography, styled, useMediaQuery, useTheme } from "@mui/material"
+import { AppBar, Avatar, Badge, Box, Button, CssBaseline, Divider, Drawer, FormControl, Grid, Icon, IconButton, InputLabel, List, ListItem, ListItemButton, ListItemIcon, ListItemText, MenuItem, Modal, Select, SelectChangeEvent, TextField, Toolbar, Typography, setRef, styled, useMediaQuery, useTheme } from "@mui/material"
 import { useState, useRef, useMemo, useEffect } from "react";
-// import Employee from "../../model/Employee";
 import { employeesService } from "../../config/service-config";
 import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
-
-import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft, GroupAdd } from "@mui/icons-material";
+import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check } from "@mui/icons-material";
 import { useSelectorAuth } from "../../redux/store";
-
 import { Confirmation } from "../common/Confirmation";
 import { EmployeeForm } from "../forms/EmployeeForm";
 import InputResult from "../../model/InputResult";
 import { useDispatchCode, useSelectorActiveUsers, useSelectorEmployees } from "../../hooks/hooks";
 import Message from "../common/Message";
+import dayjs, { Dayjs } from "dayjs";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+
 // import { useDispatchCode } from "../../hooks/hooks";
-
-const columnsCommon: GridColDef[] = [
-    {
-        field: 'id', headerName: 'ID', flex: 0.5, headerClassName: 'data-grid-header',
-        align: 'center', headerAlign: 'center'
-    },
-    {
-        field: 'name', headerName: 'Name', flex: 0.7, headerClassName: 'data-grid-header',
-        align: 'center', headerAlign: 'center'
-    }
-]
-
-const columnsPortrait: GridColDef[] = [
-    {
-        field: 'birthDate', headerName: "Date", flex: 0.8, type: 'date', headerClassName: 'data-grid-header',
-        align: 'center', headerAlign: 'center'
-    },
-    {
-        field: 'department', headerName: 'Department', flex: 0.8, headerClassName: 'data-grid-header',
-        align: 'center', headerAlign: 'center'
-    },
-    {
-        field: 'salary', headerName: 'Salary', type: 'number', flex: 0.6, headerClassName: 'data-grid-header',
-        align: 'center', headerAlign: 'center'
-    },
-    {
-        field: 'gender', headerName: 'Gender', flex: 0.6, headerClassName: 'data-grid-header',
-        align: 'center', headerAlign: 'center', renderCell: params => {
-            return params.value == "male" ? <Man /> : <Woman />
-        }
-    },
-];
-
-const style = {
-    position: 'absolute' as 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-};
 
 let drawerWidth = 240
 
@@ -68,45 +25,6 @@ const Employees: React.FC = () => {
         setOpen(!open);
         drawerWidth = open ? 240 : 60
     };
-
-    // const columnsAdmin: GridColDef[] =
-    //     [{
-    //         field: 'actions', type: "actions", getActions: (params) => {
-    //             return [
-    //                 <GridActionsCellItem label="remove" icon={<Delete />}
-    //                     onClick={() => removeEmployee(params.id)
-    //                     } />,
-    //                 <GridActionsCellItem label="update" icon={<Edit />}
-    //                     onClick={() => {
-    //                         employeeId.current = params.id as any;
-    //                         if (params.row) {
-    //                             const empl = params.row;
-    //                             empl && (employee.current = empl);
-    //                             setFlEdit(true)
-    //                         }
-    //                     }} />
-    //             ];
-    //         }
-    //     }]
-
-    // const columnDetails: GridColDef[] =
-    //     [{
-    //         field: 'details', type: "actions", headerName: 'Details', getActions: (params) => {
-    //             return [
-    //                 <GridActionsCellItem label="details" icon={<Visibility />}
-    //                     onClick={() => {
-    //                         employeeId.current = params.id as any;
-    //                         if (params.row) {
-    //                             const empl = params.row;
-    //                             empl && (employee.current = empl);
-    //                             setWatchMode(userData ? userData.role : '')
-    //                             setFlWatch(true)
-    //                         }
-    //                     }} />
-    //             ];
-    //         }
-    //     }]
-
 
     const dispatch = useDispatchCode();
     const userData = useSelectorAuth();
@@ -124,96 +42,53 @@ const Employees: React.FC = () => {
     const [groups, setGroups] = useState<any[]>([]);
     const [personal, setPersonal] = useState<any[]>([]);
     const [selectedIndex, setSelectedIndex] = useState<number>(0)
+    const [selectedChatMembers, setSelectedChatMembers] = useState<string[]>([])
 
     const title = useRef('');
     const content = useRef('');
     const employeeId = useRef('');
     const confirmFn = useRef<any>(null);
+    const AUTH_ITEM = "auth-item"
+    const currentUser = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
     // const employee = useRef<Employee | undefined>();
     const [watchMode, setWatchMode] = useState<string>('')
 
     useEffect(() => {
         employeesService.getGroups().then(group => {
+            console.log(group);
             setGroups(group.groups)
             setPersonal(group.personal)
         });
     }, [])
 
-    const [selectedChat, setSelectedChat] = useState<string>(groups[0])
-    const [selectedChatType, setSelectedChatType] = useState<string>("group")
+    const [selectedChat, setSelectedChat] = useState<string | undefined>()
+    const [selectedChatType, setSelectedChatType] = useState<string | undefined>()
     const [filterFrom, setFilterFrom] = useState<string>('')
     const [includeFrom, setIncludeFrom] = useState<boolean>(false)
+    const [filterDateTimeFrom, setFilterDateTimeFrom] = useState<Dayjs | null>()
+    const [filterDateTimeTo, setFilterDateTimeTo] = useState<Dayjs | null>()
+    const [refresh, setRefresh] = useState<boolean>(false)
 
     useEffect(() => {
-        employeesService.getFromChat(selectedChat, includeFrom, selectedChatType, filterFrom).then(messages => setMessages(messages));
-    }, [newestMessage, selectedChat])
+        if (selectedChat && selectedChatType) {
+            employeesService.getFromChat(selectedChat, includeFrom, selectedChatType, filterFrom, filterDateTimeFrom?.toISOString() || '', filterDateTimeTo?.toISOString() || '').then(messages => setMessages(messages));
+        }
+    }, [newestMessage, selectedChat, refresh])
 
+    const handleFilterFromChange = (event: SelectChangeEvent) => {
+        setFilterFrom(event.target.value as string);
+    }
 
-    // function getColumns(): GridColDef[] {
-    //     let res: GridColDef[] = columnsCommon;
-    //     if (!isPortrait) {
-    //         res = res.concat(columnsPortrait);
-    //         if (userData && userData.role == 'admin') {
-    //             res = res.concat(columnsAdmin);
-    //         }
-    //     } else {
-    //         res = res.concat(columnDetails);
-    //     }
+    const handleToggleRefresh = () => {
+        setRefresh(!refresh)
+    }
 
-    //     return res;
-    // }
-
-    // function removeEmployee(id: any) {
-    //     title.current = "Remove Employee object?";
-    //     const employee = employees.find(empl => empl.id == id);
-    //     content.current = `You are going remove employee with id ${employee?.id}`;
-    //     employeeId.current = id;
-    //     confirmFn.current = actualRemove;
-    //     setOpenConfirm(true);
-    // }
-
-    // async function actualRemove(isOk: boolean) {
-    //     let errorMessage: string = '';
-    //     if (isOk) {
-    //         try {
-    //             await employeesService.deleteEmployee(employeeId.current);
-    //         } catch (error: any) {
-    //             errorMessage = error;
-    //         }
-    //     }
-    //     dispatch(errorMessage, '');
-    //     setOpenConfirm(false);
-    // }
-
-    // function updateEmployee(empl: Employee): Promise<InputResult> {
-    //     setFlEdit(false)
-    //     setFlWatch(false)
-
-    //     const res: InputResult = { status: 'error', message: '' };
-    //     if (JSON.stringify(employee.current) != JSON.stringify(empl)) {
-    //         title.current = "Update Employee object?";
-    //         employee.current = empl;
-    //         content.current = `You are going update employee with id ${empl.id}`;
-    //         confirmFn.current = actualUpdate;
-    //         setOpenConfirm(true);
-    //     }
-    //     return Promise.resolve(res);
-    // }
-
-    // async function actualUpdate(isOk: boolean) {
-
-    //     let errorMessage: string = '';
-
-    //     if (isOk) {
-    //         try {
-    //             await employeesService.updateEmployee(employee.current!);
-    //         } catch (error: any) {
-    //             errorMessage = error
-    //         }
-    //     }
-    //     dispatch(errorMessage, '');
-    //     setOpenConfirm(false);
-    // }
+    const handleClearFilters = () => {
+        setFilterFrom('')
+        setFilterDateTimeFrom(null)
+        setFilterDateTimeTo(null)
+        handleToggleRefresh()
+    }
 
     return <Box sx={{ display: 'flex' }}>
         <Drawer
@@ -242,6 +117,7 @@ const Employees: React.FC = () => {
                         selectedChatType != "to" && setSelectedChatType("to")
                         setIncludeFrom(true)
                         setSelectedIndex(index)
+                        setSelectedChatMembers([personalName, currentUser.email])
                     }} >
                         <ListItemButton sx={{
                             minHeight: 48,
@@ -280,6 +156,7 @@ const Employees: React.FC = () => {
                         selectedChatType != "group" && setSelectedChatType("group")
                         setIncludeFrom(false)
                         setSelectedIndex(index + personal.length)
+                        setSelectedChatMembers(group.membersIds.concat(group.adminIds))
                     }}>
                         <ListItemButton color="neutral" sx={{
                             minHeight: 48,
@@ -322,8 +199,51 @@ const Employees: React.FC = () => {
             sx={{ flexGrow: 1, bgcolor: 'background.default' }}
             height={'100%'}
         >
-            <Box component="main" sx={{ flexGrow: 1, overflow: "auto", height: 'calc(80vh - 40px)' }}>
-                {/* <Message mes={newestMessage}></Message> */}
+            <Box sx={{ p: 2, backgroundColor: "background.default", height: '40px' }}>
+                <Grid container spacing={1} justifyContent='flex-start' alignItems="flex-start">
+                    <Grid item xs={2}>
+                        <FormControl fullWidth>
+                            <InputLabel id="filter-from-select-label">From</InputLabel>
+                            <Select
+                                labelId="filter-from-select-label"
+                                id="demo-simple-select"
+                                value={filterFrom}
+                                label="Age"
+                                onChange={handleFilterFromChange}
+                            >
+                                {selectedChatMembers.map(member => <MenuItem value={member}>{member}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DateTimePicker
+                                label="Date time from"
+                                value={filterDateTimeFrom}
+                                onChange={(newValue) => setFilterDateTimeFrom(newValue)}
+                            />
+                        </LocalizationProvider>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DateTimePicker
+                                label="Date time from"
+                                value={filterDateTimeTo}
+                                onChange={(newValue) => setFilterDateTimeTo(newValue)}
+                            />
+                        </LocalizationProvider>
+                    </Grid>
+                    <Grid item xs={2}>
+                        <IconButton aria-label="delete" size="large" onClick={handleClearFilters}>
+                            <Clear />
+                        </IconButton>
+                        <IconButton aria-label="delete" size="large" onClick={handleToggleRefresh}>
+                            <Check />
+                        </IconButton>
+                    </Grid>
+                </Grid>
+            </Box>
+            <Box component="main" sx={{ p: 1, flexGrow: 1, overflow: "auto", height: 'calc(80vh - 80px)' }}>
                 {(messages).map((message) => (
                     <Message mes={message} key={message._id} />
                 ))}
@@ -347,7 +267,7 @@ const Employees: React.FC = () => {
                             variant="contained"
                             endIcon={<Send />}
                             onClick={() => {
-                                employeesService.sendWSMessage(wsMessage, selectedChatType == "to" ? selectedChat : '', selectedChatType == "group" ? selectedChat : '')
+                                employeesService.sendWSMessage(wsMessage, selectedChatType == "to" ? selectedChat! : '', selectedChatType == "group" ? selectedChat! : '')
                                 setWSMessage("")
                             }}
                         >
@@ -358,9 +278,6 @@ const Employees: React.FC = () => {
             </Box>
         </Box >
     </Box>
-
-
-
 }
 
 export default Employees;
