@@ -1,7 +1,6 @@
 import { Observable } from "rxjs";
-import Employee from "../../model/Employee";
 
-export default interface EmployeesService {
+export default interface ChatRoom {
     // addEmployee(empl: Employee): Promise<Employee>;
     getNewewst(): Observable<string>;
     getActive(): Observable<any[]>
@@ -10,4 +9,5 @@ export default interface EmployeesService {
     // updateEmployee(empl: Employee): Promise<Employee>;
     sendWSMessage(message: any, to: string, group: string): void
     getGroups(): Promise<any>
+    createGroup(chatName: string, isOpened: boolean, membersIds: string[], adminsIds: string[]): Promise<any>
 }

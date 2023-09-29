@@ -9,7 +9,7 @@ import routesConfig from './config/routes-config.json';
 import NotFound from "./components/pages/NotFound";
 import { RouteType } from "./components/navigators/Navigator";
 import UserData from "./model/UserData";
-import Employees from "./components/pages/Employees";
+import Chats from "./components/pages/Chats";
 import { StatusType } from "./model/StatusType";
 import CodeType from "./model/CodeType";
 import { useDispatch } from "react-redux";
@@ -74,7 +74,7 @@ const App: React.FC = () => {
     return <BrowserRouter>
         <Routes>
             <Route path="/" element={<NavigatorDispatcher routes={routes} />}>
-                <Route index element={<Employees />} />
+                <Route index element={<Chats />} />
                 <Route path="signin" element={<SignIn />} />
                 <Route path="signout" element={<SignOut />} />
                 <Route path="/*" element={<NotFound />} />

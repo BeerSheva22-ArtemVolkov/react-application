@@ -1,7 +1,7 @@
 import { Observable, Subscriber } from "rxjs";
 // import Employee from "../../model/Employee";
 import { AUTH_DATA_JWT } from "../auth/AuthServiceJwt";
-import EmployeesService from "./EmployeesService";
+import ChatRoom from "./ChatRoomService";
 import NotifierType from "../../model/NotifierType"
 
 const AUTH_ITEM = "auth-item"
@@ -101,7 +101,7 @@ function getHeaders(): HeadersInit {
 //     return await response.json()
 // }
 
-export default class EmployeesServiceRest implements EmployeesService {
+export default class ChatRoomServiceRest implements ChatRoom {
 
     private newestObservable: Observable<string> | null = null;
     private activeObservable: Observable<any[]> | null = null;
@@ -120,6 +120,23 @@ export default class EmployeesServiceRest implements EmployeesService {
         this.urlService = `http://${baseUrl}`
         this.urlWebSocket = `ws://${baseUrl}`
         // this.cache = new Cache;
+    }
+    async createGroup(chatName: string, isOpened: boolean, membersIds: string[], adminsIds: string[]): Promise<any> {
+        const res = await fetch(this.urlService + "/chats", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
+            },
+            body: JSON.stringify({
+                chatName,
+                isOpened,
+                membersIds,
+                adminsIds
+            })
+        })
+        const data = await res.json();
+        return data;
     }
 
     sendWSMessage(message: any, to: string, group: string): void {
@@ -188,7 +205,6 @@ export default class EmployeesServiceRest implements EmployeesService {
     async getGroups(): Promise<any> {
         const res = await fetch(this.urlService + "/groups", {
             method: "GET",
-            // body: JSON.stringify(type == "to" ? { from, to: chatName } : { from, group: chatName }),
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''

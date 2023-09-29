@@ -1,8 +1,8 @@
-import { AppBar, Avatar, Badge, Box, Button, CssBaseline, Divider, Drawer, FormControl, Grid, Icon, IconButton, InputLabel, List, ListItem, ListItemButton, ListItemIcon, ListItemText, MenuItem, Modal, Select, SelectChangeEvent, TextField, Toolbar, Typography, setRef, styled, useMediaQuery, useTheme } from "@mui/material"
+import { AppBar, Avatar, Badge, Box, Button, Checkbox, CssBaseline, Dialog, Divider, Drawer, FormControl, FormControlLabel, Grid, Icon, IconButton, InputLabel, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, MenuItem, Modal, Select, SelectChangeEvent, Slide, Switch, TextField, Toolbar, Typography, setRef, styled, useMediaQuery, useTheme } from "@mui/material"
 import { useState, useRef, useMemo, useEffect } from "react";
-import { employeesService } from "../../config/service-config";
+import { chatRoomService } from "../../config/service-config";
 import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
-import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check } from "@mui/icons-material";
+import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check, Close } from "@mui/icons-material";
 import { useSelectorAuth } from "../../redux/store";
 import { Confirmation } from "../common/Confirmation";
 import { EmployeeForm } from "../forms/EmployeeForm";
@@ -12,82 +12,136 @@ import Message from "../common/Message";
 import dayjs, { Dayjs } from "dayjs";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import React from "react";
+import { TransitionProps } from "@mui/material/transitions";
 
 // import { useDispatchCode } from "../../hooks/hooks";
 
 let drawerWidth = 240
 
+const Transition = React.forwardRef(function Transition(
+    props: TransitionProps & {
+        children: React.ReactElement;
+    },
+    ref: React.Ref<unknown>,
+) {
+    return <Slide direction="up" ref={ref} {...props} />;
+});
+
 const Employees: React.FC = () => {
-
-    const [open, setOpen] = useState<boolean>(true);
-
-    const handleDrawerToggle = () => {
-        setOpen(!open);
-        drawerWidth = open ? 240 : 60
-    };
 
     const dispatch = useDispatchCode();
     const userData = useSelectorAuth();
     const newestMessage = useSelectorEmployees();
     const activeUsers = useSelectorActiveUsers();
     const theme = useTheme();
+    const AUTH_ITEM = "auth-item"
+    const currentUser = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
     const isPortrait = useMediaQuery(theme.breakpoints.down('md'));
     // const columns = useMemo(() => getColumns(), [userData, employees, isPortrait]);
 
-    const [openConfirm, setOpenConfirm] = useState(false);
-    const [openEdit, setFlEdit] = useState(false);
-    const [openWatch, setFlWatch] = useState(false);
     const [wsMessage, setWSMessage] = useState<String>('');
     const [messages, setMessages] = useState<any[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
     const [personal, setPersonal] = useState<any[]>([]);
     const [selectedIndex, setSelectedIndex] = useState<number>(0)
     const [selectedChatMembers, setSelectedChatMembers] = useState<string[]>([])
-
-    const title = useRef('');
-    const content = useRef('');
-    const employeeId = useRef('');
-    const confirmFn = useRef<any>(null);
-    const AUTH_ITEM = "auth-item"
-    const currentUser = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
-    // const employee = useRef<Employee | undefined>();
-    const [watchMode, setWatchMode] = useState<string>('')
-
-    useEffect(() => {
-        employeesService.getGroups().then(group => {
-            console.log(group);
-            setGroups(group.groups)
-            setPersonal(group.personal)
-        });
-    }, [])
-
     const [selectedChat, setSelectedChat] = useState<string | undefined>()
     const [selectedChatType, setSelectedChatType] = useState<string | undefined>()
     const [filterFrom, setFilterFrom] = useState<string>('')
     const [includeFrom, setIncludeFrom] = useState<boolean>(false)
     const [filterDateTimeFrom, setFilterDateTimeFrom] = useState<Dayjs | null>()
     const [filterDateTimeTo, setFilterDateTimeTo] = useState<Dayjs | null>()
-    const [refresh, setRefresh] = useState<boolean>(false)
+    const [refreshMessages, setRefreshMessages] = useState<boolean>(false)
+    const [refreshGroups, setRefreshGroups] = useState<boolean>(false)
+    const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false)
+    const [drawerOpen, setDrawewrOpen] = useState<boolean>(true);
+    const [createGroupIsOpen, setCreateGroupIsOpen] = useState<boolean>(false)
+    const [createGroupAdmins, setCreateGroupAdmins] = useState<string[]>([]);
+    const [createGroupMembers, setCreateGroupMembers] = useState<string[]>([]);
+    const [chatName, setChatName] = useState<string>('')
+
+    useEffect(() => {
+        chatRoomService.getGroups().then(group => {
+            setGroups(group.groups)
+            setPersonal(group.personal)
+        });
+    }, [refreshGroups])
 
     useEffect(() => {
         if (selectedChat && selectedChatType) {
-            employeesService.getFromChat(selectedChat, includeFrom, selectedChatType, filterFrom, filterDateTimeFrom?.toISOString() || '', filterDateTimeTo?.toISOString() || '').then(messages => setMessages(messages));
+            chatRoomService.getFromChat(selectedChat, includeFrom, selectedChatType, filterFrom, filterDateTimeFrom?.toISOString() || '', filterDateTimeTo?.toISOString() || '').then(messages => setMessages(messages));
         }
-    }, [newestMessage, selectedChat, refresh])
+    }, [newestMessage, selectedChat, refreshMessages])
 
     const handleFilterFromChange = (event: SelectChangeEvent) => {
         setFilterFrom(event.target.value as string);
     }
 
-    const handleToggleRefresh = () => {
-        setRefresh(!refresh)
+    const handleDrawerToggle = () => {
+        setDrawewrOpen(!drawerOpen);
+        drawerWidth = drawerOpen ? 240 : 60
+    };
+
+    const handleToggleRefreshMessages = () => {
+        setRefreshMessages(!refreshMessages)
+    }
+
+    const handleToggleRefreshGroups = () => {
+        setRefreshGroups(!refreshGroups)
     }
 
     const handleClearFilters = () => {
         setFilterFrom('')
         setFilterDateTimeFrom(null)
         setFilterDateTimeTo(null)
-        handleToggleRefresh()
+        handleToggleRefreshMessages()
+    }
+
+    const handleToggleCreateGroupDialog = () => {
+        setCreateDialogOpen(!createDialogOpen)
+    }
+
+    const handleCreateGroupIsOpen = () => {
+        setCreateGroupIsOpen(!createGroupIsOpen)
+    }
+
+    const handleSelectAdmin = (value: string, type: string) => () => {
+
+        const indexAdmin = createGroupAdmins.indexOf(value);
+        const indexMember = createGroupMembers.indexOf(value);
+        const adminsChecked = [...createGroupAdmins];
+        const membersChecked = [...createGroupMembers];
+
+        switch (type) {
+            case "admin":
+                if (indexAdmin === -1) {
+                    adminsChecked.push(value);
+                } else {
+                    adminsChecked.splice(indexAdmin, 1);
+                }
+                break;
+            case "member":
+                if (indexMember === -1) {
+                    membersChecked.push(value);
+                } else {
+                    membersChecked.splice(indexMember, 1);
+                }
+                break;
+        }
+
+        if (type == 'admin' && indexMember !== -1) {
+            membersChecked.splice(indexMember, 1);
+        } else if (type == 'member' && indexAdmin !== -1) {
+            adminsChecked.splice(indexAdmin, 1);
+        }
+        setCreateGroupMembers(membersChecked);
+        setCreateGroupAdmins(adminsChecked);
+
+    };
+
+    const handleChatName = (event: any) => {
+        setChatName(event.target.value as string);
     }
 
     return <Box sx={{ display: 'flex' }}>
@@ -108,7 +162,7 @@ const Employees: React.FC = () => {
             <Toolbar />
             <Divider />
             <IconButton onClick={handleDrawerToggle}>
-                {open ? <ChevronRight /> : <ChevronLeft />}
+                {drawerOpen ? <ChevronRight /> : <ChevronLeft />}
             </IconButton>
             <List>
                 {personal.map((personalName, index) => (
@@ -143,7 +197,7 @@ const Employees: React.FC = () => {
                                     </Badge>
                                 </ListItemIcon>
                             </Badge>
-                            <ListItemText primary={personalName} sx={{ opacity: open ? 0 : 1 }} />
+                            <ListItemText primary={personalName} sx={{ opacity: drawerOpen ? 0 : 1 }} />
                         </ListItemButton>
                     </ListItem>
                 ))}
@@ -172,7 +226,7 @@ const Employees: React.FC = () => {
                                     {group.chatName}
                                 </Avatar>
                             </ListItemIcon>
-                            <ListItemText primary={group.chatName} sx={{ opacity: open ? 0 : 1 }} />
+                            <ListItemText primary={group.chatName} sx={{ opacity: drawerOpen ? 0 : 1 }} />
                         </ListItemButton>
                     </ListItem>
                 ))}
@@ -185,13 +239,14 @@ const Employees: React.FC = () => {
                 justifyContent: 'center',
                 px: 2.5,
                 backgroundColor: 'white'
-            }}>
+            }}
+                onClick={handleToggleCreateGroupDialog}>
                 <Icon sx={{
                     justifyContent: 'center',
                 }}>
                     {<GroupAdd />}
                 </Icon>
-                <ListItemText primary={"Create new group"} sx={{ opacity: open ? 0 : 1 }} />
+                <ListItemText primary={"Create new group"} sx={{ opacity: drawerOpen ? 0 : 1 }} />
             </Button>
         </Drawer>
         <Box
@@ -237,7 +292,7 @@ const Employees: React.FC = () => {
                         <IconButton aria-label="delete" size="large" onClick={handleClearFilters}>
                             <Clear />
                         </IconButton>
-                        <IconButton aria-label="delete" size="large" onClick={handleToggleRefresh}>
+                        <IconButton aria-label="delete" size="large" onClick={handleToggleRefreshMessages}>
                             <Check />
                         </IconButton>
                     </Grid>
@@ -267,7 +322,7 @@ const Employees: React.FC = () => {
                             variant="contained"
                             endIcon={<Send />}
                             onClick={() => {
-                                employeesService.sendWSMessage(wsMessage, selectedChatType == "to" ? selectedChat! : '', selectedChatType == "group" ? selectedChat! : '')
+                                chatRoomService.sendWSMessage(wsMessage, selectedChatType == "to" ? selectedChat! : '', selectedChatType == "group" ? selectedChat! : '')
                                 setWSMessage("")
                             }}
                         >
@@ -277,6 +332,89 @@ const Employees: React.FC = () => {
                 </Grid>
             </Box>
         </Box >
+        <Dialog
+            fullScreen
+            open={createDialogOpen}
+            onClose={handleToggleCreateGroupDialog}
+            TransitionComponent={Transition}
+        >
+            <AppBar sx={{ position: 'relative' }}>
+                <Toolbar>
+                    <IconButton
+                        edge="start"
+                        color="inherit"
+                        onClick={handleToggleCreateGroupDialog}
+                        aria-label="close"
+                    >
+                        <Close />
+                    </IconButton>
+                    <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
+                        Create Chat Group
+                    </Typography>
+                    <Button autoFocus color="inherit" onClick={() => {
+                        chatRoomService.createGroup(chatName, createGroupIsOpen, createGroupMembers, createGroupAdmins)
+                            .then(() => {
+                                handleToggleCreateGroupDialog();
+                                handleToggleRefreshGroups();
+                            })
+                            .catch((err) => dispatch(err.message, ''))
+                    }}>
+                        save
+                    </Button>
+                </Toolbar>
+            </AppBar>
+            <Grid container spacing={2} direction="row" justifyContent="flex-start" alignItems="flex-start" p={1}>
+                <Grid container xs={4} item direction='column' justifyContent="flex-start" alignItems="center" spacing={2}>
+                    <Grid item xs={12}>
+                        <TextField id="standard-basic" label="Chat group name" variant="standard" value={chatName} onChange={handleChatName} />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <FormControlLabel control={<Switch
+                            checked={createGroupIsOpen}
+                            onChange={handleCreateGroupIsOpen}
+                            inputProps={{ 'aria-label': 'controlled' }}
+                        />} label='Is open group' />
+                    </Grid>
+                </Grid>
+                <Grid container item xs={8}>
+                    <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                        {personal.filter(p => p != currentUser).map((personalName) => {
+                            const labelId = `checkbox-list-secondary-label-${personalName}`;
+                            return (
+                                <ListItem
+                                    key={personalName}
+                                    secondaryAction={
+                                        <>
+                                            <Checkbox
+                                                edge="start"
+                                                onChange={handleSelectAdmin(personalName, 'admin')}
+                                                checked={createGroupAdmins.indexOf(personalName) !== -1}
+                                                inputProps={{ 'aria-labelledby': labelId }} />
+                                            <Checkbox
+                                                edge="start"
+                                                onChange={handleSelectAdmin(personalName, 'member')}
+                                                checked={createGroupMembers.indexOf(personalName) !== -1}
+                                                inputProps={{ 'aria-labelledby': labelId }} />
+                                        </>
+                                    }
+                                    disablePadding
+                                >
+                                    <ListItemButton>
+                                        <ListItemAvatar>
+                                            <Avatar
+                                                alt={`Avatar n°${personalName + 1}`}
+                                                src={`/static/images/avatar/${personalName + 1}.jpg`}
+                                            />
+                                        </ListItemAvatar>
+                                        <ListItemText id={labelId} primary={personalName} />
+                                    </ListItemButton>
+                                </ListItem>
+                            );
+                        })}
+                    </List>
+                </Grid>
+            </Grid>
+        </Dialog>
     </Box>
 }
 

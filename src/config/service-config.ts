@@ -1,7 +1,7 @@
 import AuthService from "../service/auth/AuthService";
 import AuthServiceJwt from "../service/auth/AuthServiceJwt";
-import EmployeesService from "../service/crud/EmployeesService";
-import EmployeesServiceRest from "../service/crud/EmployeesServiceRest";
+import ChatRoom from "../service/crud/ChatRoomService";
+import ChatRoomServiceRest from "../service/crud/ChatRoomServiceRest";
 
 export const authService: AuthService = new AuthServiceJwt('http://localhost:8080/users/login');
-export const employeesService: EmployeesService = new EmployeesServiceRest("localhost:8080");
+export const chatRoomService: ChatRoom = new ChatRoomServiceRest("localhost:8080");

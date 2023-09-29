@@ -4,7 +4,7 @@ import { codeActions } from "../redux/slices/codeSlice";
 import { useEffect, useState } from "react";
 // import Employee from "../model/Employee"; 
 import { Subscription } from "rxjs";
-import { employeesService } from "../config/service-config";
+import { chatRoomService } from "../config/service-config";
 
 export function useDispatchCode() {
     const dispatch = useDispatch();
@@ -28,7 +28,7 @@ export function useSelectorEmployees() {
     const [newMessage, setNewMessage] = useState<String>('');
 
     useEffect(() => {
-        const subscription: Subscription = employeesService.getNewewst()
+        const subscription: Subscription = chatRoomService.getNewewst()
             .subscribe({
                 next(message: string) {
                     let errorMessage: string = '';
@@ -46,7 +46,7 @@ export function useSelectorActiveUsers() {
     const [activeUsers, setActiveUsers] = useState<any[]>([]);
 
     useEffect(() => {
-        const subscription: Subscription = employeesService.getActive()
+        const subscription: Subscription = chatRoomService.getActive()
             .subscribe({
                 next(users: any[]) {
                     let errorMessage: string = '';
