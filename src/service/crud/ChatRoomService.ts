@@ -1,4 +1,5 @@
 import { Observable } from "rxjs";
+import ChatGroupType from "../../model/ChatGroupType";
 
 export default interface ChatRoom {
     // addEmployee(empl: Employee): Promise<Employee>;
@@ -9,5 +10,7 @@ export default interface ChatRoom {
     // updateEmployee(empl: Employee): Promise<Employee>;
     sendWSMessage(message: any, to: string, group: string): void
     getGroups(): Promise<any>
-    createGroup(chatName: string, isOpened: boolean, membersIds: string[], adminsIds: string[]): Promise<any>
+    createGroup(chatGroup: ChatGroupType): Promise<any>
+    deleteUserFromChat(chatName: string, userName: string): Promise<any>
+    updateGroup(chatGroup: ChatGroupType): Promise<any>
 }

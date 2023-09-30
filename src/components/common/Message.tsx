@@ -3,19 +3,13 @@ import { Avatar, Box, Paper, Typography } from "@mui/material";
 type Props = {
     mes: any;
 }
-const AUTH_ITEM = "auth-item"
 
+const AUTH_ITEM = "auth-item"
 const currentUser = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
 
 const Message: React.FC<Props> = ({ mes }) => {
 
     const message = mes.messageObj || JSON.parse('{}');
-    // const isBot = message.sender === "bot";
-    console.log(mes);
-    console.log(currentUser);
-
-
-
     const isMyMessage: Boolean = mes.from == currentUser.email
 
     return (

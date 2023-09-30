@@ -2,24 +2,26 @@ import { useDispatch } from "react-redux";
 import CodeType from "../model/CodeType";
 import { codeActions } from "../redux/slices/codeSlice";
 import { useEffect, useState } from "react";
-// import Employee from "../model/Employee"; 
 import { Subscription } from "rxjs";
 import { chatRoomService } from "../config/service-config";
 
 export function useDispatchCode() {
     const dispatch = useDispatch();
-    return (error: string, successMessage: string) => {
+    return (errorMessage: string, successMessage: string) => {
         let code: CodeType = CodeType.OK;
-        let message: string = '';
+        let message: string = successMessage;
 
-        if (error.includes('Authentication')) {
-            code = CodeType.AUTH_ERROR;
-            message = "Authentication error, mooving to Sign In";
-        } else {
-            code = error.includes('unavailable') ? CodeType.SERVER_ERROR : CodeType.UNKNOWN;
-            message = error;
+        if (errorMessage) {
+            if (errorMessage.includes('Authentication')) {
+                code = CodeType.AUTH_ERROR;
+                message = "Authentication error, mooving to Sign In";
+            } else {
+                code = errorMessage.includes('unavailable') ? CodeType.SERVER_ERROR : CodeType.UNKNOWN;
+                message = errorMessage;
+            }
         }
-        dispatch(codeActions.set({ code, message: message || successMessage }))
+
+        dispatch(codeActions.set({ code, message }))
     }
 }
 

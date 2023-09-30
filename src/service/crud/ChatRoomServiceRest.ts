@@ -3,6 +3,7 @@ import { Observable, Subscriber } from "rxjs";
 import { AUTH_DATA_JWT } from "../auth/AuthServiceJwt";
 import ChatRoom from "./ChatRoomService";
 import NotifierType from "../../model/NotifierType"
+import ChatGroupType from "../../model/ChatGroupType";
 
 const AUTH_ITEM = "auth-item"
 // class Cache {
@@ -121,19 +122,45 @@ export default class ChatRoomServiceRest implements ChatRoom {
         this.urlWebSocket = `ws://${baseUrl}`
         // this.cache = new Cache;
     }
-    async createGroup(chatName: string, isOpened: boolean, membersIds: string[], adminsIds: string[]): Promise<any> {
+
+    async deleteUserFromChat(chatName: string, userName: string): Promise<any> {
+        console.log(chatName, userName);
+        
+        const res = await fetch(this.urlService + `/chats/removeUser/${chatName}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
+            },
+            body: JSON.stringify({ userName })
+        })
+        const data = await res.json();
+        console.log(data);
+        
+        return data;
+    }
+
+    async createGroup(chatGroup: ChatGroupType): Promise<any> {
         const res = await fetch(this.urlService + "/chats", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
             },
-            body: JSON.stringify({
-                chatName,
-                isOpened,
-                membersIds,
-                adminsIds
-            })
+            body: JSON.stringify(chatGroup)
+        })
+        const data = await res.json();
+        return data;
+    }
+
+    async updateGroup(chatGroup: ChatGroupType): Promise<any> {
+        const res = await fetch(this.urlService + "/chats", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
+            },
+            body: JSON.stringify(chatGroup)
         })
         const data = await res.json();
         return data;
