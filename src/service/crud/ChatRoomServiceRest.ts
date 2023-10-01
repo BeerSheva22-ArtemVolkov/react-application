@@ -123,9 +123,21 @@ export default class ChatRoomServiceRest implements ChatRoom {
         // this.cache = new Cache;
     }
 
-    async deleteUserFromChat(chatName: string, userName: string): Promise<any> {
-        console.log(chatName, userName);
+    async deleteMessage(messageId: string): Promise<any> {
+        const res = await fetch(this.urlService + `/messages/${messageId}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
+            }
+        })
+        const data = await res.json();
+        console.log(data);
         
+        return data;
+    }
+
+    async deleteUserFromChat(chatName: string, userName: string): Promise<any> {
         const res = await fetch(this.urlService + `/chats/removeUser/${chatName}`, {
             method: "DELETE",
             headers: {
@@ -135,8 +147,6 @@ export default class ChatRoomServiceRest implements ChatRoom {
             body: JSON.stringify({ userName })
         })
         const data = await res.json();
-        console.log(data);
-        
         return data;
     }
 
@@ -271,15 +281,12 @@ export default class ChatRoomServiceRest implements ChatRoom {
 
     private connectWS() {
         const userName = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
-        console.log(userName);
-
         this.webSocket = new WebSocket(`${this.urlWebSocket}/contacts/websocket/${userName.email}`, localStorage.getItem(AUTH_DATA_JWT) || '');
         this.webSocket.onopen = () => {
             console.log('websocket connected');
         }
 
         this.webSocket.onmessage = message => { // listener
-            console.log(message.data);
             this.chatSubscriberNext(message.data);
         }
     }
@@ -291,7 +298,6 @@ export default class ChatRoomServiceRest implements ChatRoom {
         }
 
         this.globalWebSocket.onmessage = message => { // listener
-            console.log(JSON.parse(message.data));
             this.globalSubscriberNext(JSON.parse(message.data));
         }
     }

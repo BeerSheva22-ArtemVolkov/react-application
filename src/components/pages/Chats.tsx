@@ -34,7 +34,7 @@ const Employees: React.FC = () => {
     const theme = useTheme();
     const AUTH_ITEM = "auth-item"
     const currentUser = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
-    const isPortrait = useMediaQuery(theme.breakpoints.down('md'));
+    // const isPortrait = useMediaQuery(theme.breakpoints.down('md'));
 
     const [wsMessage, setWSMessage] = useState<String>('');
     const [messages, setMessages] = useState<any[]>([]);
@@ -301,7 +301,7 @@ const Employees: React.FC = () => {
             </Box>
             <Box component="main" sx={{ p: 1, flexGrow: 1, overflow: "auto", height: 'calc(80vh - 80px)' }}>
                 {(messages).map((message) => (
-                    <Message mes={message} key={message._id} />
+                    <Message mes={message} key={message._id} deleteFn={(mes) => chatRoomService.deleteMessage(mes)} handleToggleRefreshMessages={handleToggleRefreshMessages} />
                 ))}
             </Box>
             <Box sx={{ p: 2, backgroundColor: "background.default", height: '40px' }}>

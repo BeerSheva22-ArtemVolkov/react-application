@@ -13,4 +13,5 @@ export default interface ChatRoom {
     createGroup(chatGroup: ChatGroupType): Promise<any>
     deleteUserFromChat(chatName: string, userName: string): Promise<any>
     updateGroup(chatGroup: ChatGroupType): Promise<any>
+    deleteMessage(messageId: string): Promise<any>
 }
