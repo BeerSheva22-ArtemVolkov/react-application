@@ -123,6 +123,20 @@ export default class ChatRoomServiceRest implements ChatRoom {
         // this.cache = new Cache;
     }
 
+    async joinToChat(chatName: string): Promise<any> {
+        const res = await fetch(this.urlService + `/chats/join/${chatName}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
+            }
+        })
+        console.log(res);        
+        const data = await res.json();
+        console.log(data);      
+        return data;
+    }
+
     async deleteMessage(messageId: string): Promise<any> {
         const res = await fetch(this.urlService + `/messages/${messageId}`, {
             method: "DELETE",
@@ -132,8 +146,6 @@ export default class ChatRoomServiceRest implements ChatRoom {
             }
         })
         const data = await res.json();
-        console.log(data);
-        
         return data;
     }
 
@@ -191,10 +203,6 @@ export default class ChatRoomServiceRest implements ChatRoom {
     //     return await response.json();
     // }
 
-    private getUrlWithId(id: any): string {
-        return `${this.urlService}/${id}`;
-    }
-
     // async deleteEmployee(id: any): Promise<void> {
     //     await fetchRequest(this.getUrlWithId(id), {
     //         method: 'DELETE',
@@ -239,12 +247,25 @@ export default class ChatRoomServiceRest implements ChatRoom {
         // }).catch(error => this.subscriber?.next(error));
     }
 
-    async getGroups(): Promise<any> {
-        const res = await fetch(this.urlService + "/groups", {
+    async getAllChats(): Promise<any> {
+        const res = await fetch(this.urlService + "/allChats", {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
+            }
+        })
+        const data = await res.json();
+        return data;
+    }
+
+    async getGroups(FilterName?: string): Promise<any> {
+        const res = await fetch(this.urlService + "/chats", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || '',
+                "filtername": FilterName || ''
             }
         })
         const data = await res.json();

@@ -9,9 +9,11 @@ export default interface ChatRoom {
     // deleteEmployee(id: any): Promise<void>;
     // updateEmployee(empl: Employee): Promise<Employee>;
     sendWSMessage(message: any, to: string, group: string): void
-    getGroups(): Promise<any>
+    getGroups(filterName?: string): Promise<any>
+    getAllChats(): Promise<any>
     createGroup(chatGroup: ChatGroupType): Promise<any>
     deleteUserFromChat(chatName: string, userName: string): Promise<any>
+    joinToChat(chatName: string): Promise<any>
     updateGroup(chatGroup: ChatGroupType): Promise<any>
     deleteMessage(messageId: string): Promise<any>
 }

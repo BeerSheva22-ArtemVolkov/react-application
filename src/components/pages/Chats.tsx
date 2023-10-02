@@ -1,8 +1,8 @@
-import { AppBar, Avatar, Badge, Box, Button, Checkbox, CssBaseline, Dialog, Divider, Drawer, FormControl, FormControlLabel, Grid, Icon, IconButton, InputLabel, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Modal, Select, SelectChangeEvent, Slide, Switch, TextField, Toolbar, Typography, setRef, styled, useMediaQuery, useTheme } from "@mui/material"
+import { AppBar, Avatar, Badge, Box, Button, Checkbox, CssBaseline, Dialog, Divider, Drawer, FormControl, FormControlLabel, Grid, Icon, IconButton, InputBase, InputLabel, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Modal, Paper, Select, SelectChangeEvent, Slide, Switch, TextField, Toolbar, Typography, setRef, styled, useMediaQuery, useTheme } from "@mui/material"
 import { useState, useRef, useMemo, useEffect } from "react";
 import { chatRoomService } from "../../config/service-config";
 import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
-import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check, Close, Settings } from "@mui/icons-material";
+import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check, Close, Settings, Search } from "@mui/icons-material";
 import { useSelectorAuth } from "../../redux/store";
 import { useDispatchCode, useSelectorActiveUsers, useSelectorEmployees } from "../../hooks/hooks";
 import Message from "../common/Message";
@@ -55,10 +55,22 @@ const Employees: React.FC = () => {
     const [updateDialogOpen, setUpdateDialogOpen] = useState<boolean>(false)
     const [drawerOpen, setDrawewrOpen] = useState<boolean>(true);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [groupSearch, setGroupSearch] = useState<string>('')
+    const [groupSearchResult, setGroupSearchResult] = useState<any[]>([])
+    const [searchGroupsAnchor, setSearchGroupsAnchor] = useState<null | HTMLElement>(null);
+    const messageContextOpen = Boolean(searchGroupsAnchor);
     const open = Boolean(anchorEl);
 
+    const handleSearchGroupsOpen = (event: React.MouseEvent<HTMLLIElement>) => {
+        setSearchGroupsAnchor(event.currentTarget);
+    };
+
+    const handleSearchGroupsClose = () => {
+        setSearchGroupsAnchor(null);
+    };
+
     useEffect(() => {
-        chatRoomService.getGroups().then(group => {
+        chatRoomService.getAllChats().then(group => {
             setGroups(group.groups)
             setPersonal(group.personal)
         });
@@ -72,6 +84,18 @@ const Employees: React.FC = () => {
             chatRoomService.getFromChat(selectedChat, includeFrom, selectedChatType, filterFrom, filterDateTimeFrom?.toISOString() || '', filterDateTimeTo?.toISOString() || '').then(messages => setMessages(messages));
         }
     }, [newestMessage, selectedChat, refreshMessages])
+
+    useEffect(() => {
+        const searchFn = setTimeout(async () => {
+            let searchRes = [];
+            if (groupSearch) {
+                searchRes = await chatRoomService.getGroups(groupSearch)
+                console.log(searchRes);
+            }
+            setGroupSearchResult(searchRes);
+        }, 500)
+        return () => clearTimeout(searchFn)
+    }, [groupSearch])
 
     const handleFilterFromChange = (event: SelectChangeEvent) => {
         setFilterFrom(event.target.value as string);
@@ -171,6 +195,74 @@ const Employees: React.FC = () => {
                             <ListItemText primary={personalName} sx={{ opacity: drawerOpen ? 0 : 1 }} />
                         </ListItemButton>
                     </ListItem>
+                ))}
+            </List>
+            <Divider />
+            <Paper
+                component="form"
+                sx={{ p: '2px 4px', display: 'flex', alignItems: 'center' }}
+            >
+                <InputBase
+                    sx={{ ml: 1, flex: 1 }}
+                    placeholder="Search groups"
+                    inputProps={{ 'aria-label': 'Search groups' }}
+                    onChange={(e) => setGroupSearch(e.target.value)}
+                />
+            </Paper>
+            <List>
+                {groupSearchResult.map((group, index) => (
+                    <>
+                        <ListItem key={group._id} disablePadding
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                handleSearchGroupsOpen(e);
+                            }}
+                        >
+                            <ListItemButton color="neutral" sx={{
+                                minHeight: 48,
+                                justifyContent: 'center',
+                                px: 2.5,
+                                backgroundColor: 'lightblue'
+                            }}>
+                                <ListItemIcon sx={{
+                                    minWidth: 0,
+                                    justifyContent: 'center',
+                                }}>
+                                    <Avatar sx={{ width: 36, height: 36 }}>
+                                        {group.chatName}
+                                    </Avatar>
+                                </ListItemIcon>
+                                <ListItemText primary={group.chatName} sx={{ opacity: drawerOpen ? 0 : 1 }} />
+                            </ListItemButton>
+                        </ListItem>
+                        <Menu
+                            id="basic-menu"
+                            anchorEl={searchGroupsAnchor}
+                            open={messageContextOpen}
+                            onClose={handleSearchGroupsClose}
+                            MenuListProps={{
+                                'aria-labelledby': 'basic-button',
+                            }}
+                        >
+                            <MenuItem disabled={Boolean(group.isOpened) || group.adminsIds.includes(currentUser.email) || group.membersIds.includes(currentUser.email) || group.waitingIds.includes(currentUser.email)}
+                                onClick={() => {
+                                    chatRoomService.joinToChat(group.chatName)
+                                        .then((res) => {
+                                            if (res.message.startsWith("Request")) {
+                                                group.waitingIds.push(currentUser.email)
+                                            } else {
+                                                group.membersIds.push(currentUser.email)
+                                            }
+                                            dispatch('', res.message)
+                                        })
+                                        .catch((error) => {
+                                            dispatch(`Error deleeting message: ${error.message}`, '')
+                                        })
+                                }}
+                            >Join the chat</MenuItem>
+                            {/* <MenuItem disabled={!(group.adminsIds.includes(currentUser.email) || group.membersIds.includes(currentUser.email))}>Left the chat</MenuItem> */}
+                        </Menu>
+                    </>
                 ))}
             </List>
             <Divider />
@@ -295,7 +387,6 @@ const Employees: React.FC = () => {
                                 <MenuItem onClick={handleToggleUpdateGroupDialog}>Chat settings</MenuItem>
                             </Menu>
                         </div>
-
                     </Grid>
                 </Grid>
             </Box>
