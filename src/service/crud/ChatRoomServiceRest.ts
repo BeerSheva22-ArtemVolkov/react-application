@@ -123,6 +123,19 @@ export default class ChatRoomServiceRest implements ChatRoom {
         // this.cache = new Cache;
     }
 
+    async updateAccount(image: string): Promise<any> {
+        const res = await fetch(this.urlService + `/users`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
+            },
+            body: JSON.stringify({ image })
+        })
+        const data = await res.json();
+        return data;
+    }
+
     async joinToChat(chatName: string): Promise<any> {
         const res = await fetch(this.urlService + `/chats/join/${chatName}`, {
             method: "POST",
@@ -131,9 +144,7 @@ export default class ChatRoomServiceRest implements ChatRoom {
                 "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
             }
         })
-        console.log(res);        
         const data = await res.json();
-        console.log(data);      
         return data;
     }
 

@@ -2,7 +2,7 @@ import { AppBar, Avatar, Badge, Box, Button, Checkbox, CssBaseline, Dialog, Divi
 import { useState, useRef, useMemo, useEffect } from "react";
 import { chatRoomService } from "../../config/service-config";
 import { DataGrid, GridActionsCellItem, GridColDef } from "@mui/x-data-grid";
-import { Delete, Edit, Man, Woman, Visibility, Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check, Close, Settings, Search } from "@mui/icons-material";
+import { Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check, Close, Settings, Search } from "@mui/icons-material";
 import { useSelectorAuth } from "../../redux/store";
 import { useDispatchCode, useSelectorActiveUsers, useSelectorEmployees } from "../../hooks/hooks";
 import Message from "../common/Message";
@@ -13,6 +13,7 @@ import React from "react";
 import { TransitionProps } from "@mui/material/transitions";
 import { ChatGroupForm } from "../forms/ChatGroupForm";
 import ChatGroupType from "../../model/ChatGroupType";
+import { AccountSettingsForm } from "../forms/AccountSettingsForm";
 
 let drawerWidth = 240
 
@@ -43,6 +44,7 @@ const Employees: React.FC = () => {
     const [selectedIndex, setSelectedIndex] = useState<number>(0)
     const [selectedChatMembers, setSelectedChatMembers] = useState<string[]>([])
     const [selectedChatAdmins, setSelectedChatAdmins] = useState<string[]>([])
+    const [selectedChatRequests, setSelectedChatRequests] = useState<string[]>([])
     const [selectedChat, setSelectedChat] = useState<string | undefined>()
     const [selectedChatType, setSelectedChatType] = useState<string | undefined>()
     const [filterFrom, setFilterFrom] = useState<string>('')
@@ -53,6 +55,7 @@ const Employees: React.FC = () => {
     const [refreshGroups, setRefreshGroups] = useState<boolean>(false)
     const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false)
     const [updateDialogOpen, setUpdateDialogOpen] = useState<boolean>(false)
+    const [accountSettingsDialogOpen, setAccountSettingsDialogOpen] = useState<boolean>(false)
     const [drawerOpen, setDrawewrOpen] = useState<boolean>(true);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [groupSearch, setGroupSearch] = useState<string>('')
@@ -73,6 +76,8 @@ const Employees: React.FC = () => {
         chatRoomService.getAllChats().then(group => {
             setGroups(group.groups)
             setPersonal(group.personal)
+            console.log(group.personal);
+            
         });
     }, [refreshGroups])
 
@@ -122,13 +127,15 @@ const Employees: React.FC = () => {
     }
 
     const handleToggleCreateGroupDialog = () => {
-        console.log('toggle create');
         setCreateDialogOpen(!createDialogOpen)
     }
 
     const handleToggleUpdateGroupDialog = () => {
-        console.log('toggle update');
         setUpdateDialogOpen(!updateDialogOpen)
+    }
+
+    const handleToggleAccountSettingsDialog = () => {
+        setAccountSettingsDialogOpen(!accountSettingsDialogOpen)
     }
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -161,12 +168,12 @@ const Employees: React.FC = () => {
             </IconButton>
             <List>
                 {personal.map((personalName, index) => (
-                    <ListItem key={personalName} disablePadding onClick={() => {
-                        setSelectedChat(personalName)
+                    <ListItem key={personalName._id} disablePadding onClick={() => {
+                        setSelectedChat(personalName._id)
                         selectedChatType != "to" && setSelectedChatType("to")
                         setIncludeFrom(true)
                         setSelectedIndex(index)
-                        setSelectedChatMembers([personalName, currentUser.email])
+                        setSelectedChatMembers([personalName._id, currentUser.email])
                     }} >
                         <ListItemButton sx={{
                             minHeight: 48,
@@ -183,16 +190,16 @@ const Employees: React.FC = () => {
                                         overlap="circular"
                                         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                                         badgeContent={
-                                            <Avatar sx={{ width: 12, height: 12, backgroundColor: activeUsers.includes(personalName) ? 'green' : 'gray' }}>{""}</Avatar>
+                                            <Avatar sx={{ width: 12, height: 12, backgroundColor: activeUsers.includes(personalName._id) ? 'green' : 'gray' }}>{""}</Avatar>
                                         }
                                     >
-                                        <Avatar sx={{ width: 36, height: 36 }}>
-                                            {personalName}
+                                        <Avatar src={personalName.image} sx={{ width: 36, height: 36 }}>
+                                            {personalName._id}
                                         </Avatar>
                                     </Badge>
                                 </ListItemIcon>
                             </Badge>
-                            <ListItemText primary={personalName} sx={{ opacity: drawerOpen ? 0 : 1 }} />
+                            <ListItemText primary={personalName._id} sx={{ opacity: drawerOpen ? 0 : 1 }} />
                         </ListItemButton>
                     </ListItem>
                 ))}
@@ -270,12 +277,15 @@ const Employees: React.FC = () => {
                 {groups.map((group, index) => (
                     <ListItem key={group._id} disablePadding
                         onClick={() => {
+                            console.log(group);
+
                             setSelectedChat(group.chatName)
                             selectedChatType != "group" && setSelectedChatType("group")
                             setIncludeFrom(false)
                             setSelectedIndex(index + personal.length)
                             setSelectedChatMembers(group.membersIds)
                             setSelectedChatAdmins(group.adminsIds)
+                            setSelectedChatRequests(group.waitingIds)
                         }}
                     >
                         <ListItemButton color="neutral" sx={{
@@ -361,8 +371,10 @@ const Employees: React.FC = () => {
                         <IconButton aria-label="confirm" size="large" onClick={handleToggleRefreshMessages}>
                             <Check />
                         </IconButton>
-                        {selectedChatType == 'group' && <IconButton aria-label="settings" size="large" onClick={handleClick}>
-                            <Settings />
+                        {<IconButton aria-label="settings" size="large" onClick={handleClick}>
+                            <Badge badgeContent={selectedChatType == 'group' ? selectedChatRequests.length : 0} color="info">
+                                <Settings />
+                            </Badge>
                         </IconButton>}
                         <div>
                             <Menu
@@ -374,7 +386,8 @@ const Employees: React.FC = () => {
                                     'aria-labelledby': 'basic-button',
                                 }}
                             >
-                                <MenuItem onClick={() => {
+                                <MenuItem onClick={handleToggleAccountSettingsDialog}>Account settings</MenuItem>
+                                {selectedChatType == 'group' && <MenuItem onClick={() => {
                                     chatRoomService.deleteUserFromChat(selectedChat!, currentUser.email)
                                         .then(() => {
                                             dispatch('', `You have left the chat <${selectedChat}>`)
@@ -383,8 +396,8 @@ const Employees: React.FC = () => {
                                             handleToggleRefreshGroups();
                                         })
                                         .catch((error) => console.log(error))
-                                }}>Left the chat</MenuItem>
-                                <MenuItem onClick={handleToggleUpdateGroupDialog}>Chat settings</MenuItem>
+                                }}>Left the chat</MenuItem>}
+                                {selectedChatType == 'group' && <MenuItem onClick={handleToggleUpdateGroupDialog}>Chat settings</MenuItem>}
                             </Menu>
                         </div>
                     </Grid>
@@ -453,11 +466,22 @@ const Employees: React.FC = () => {
                 handleToggleRefreshGroups={handleToggleRefreshGroups}
                 personal={personal}
                 submitFn={function (chatGroup: ChatGroupType): Promise<any> {
-                    return chatRoomService.updateGroup(chatGroup)
+                    return chatRoomService.updateGroup(chatGroup);
                 }}
                 initAdmins={selectedChatAdmins}
                 initMembers={selectedChatMembers}
+                initWaitings={selectedChatRequests}
             />}
+        </Dialog>
+        <Dialog
+            fullScreen
+            open={accountSettingsDialogOpen}
+            onClose={handleToggleAccountSettingsDialog}
+            TransitionComponent={Transition}
+        >
+            <AccountSettingsForm submitFn={function (image: any): Promise<any> {
+                return chatRoomService.updateAccount(image)
+            }} handleToggleDialog={handleToggleAccountSettingsDialog} />
         </Dialog>
     </Box>
 }

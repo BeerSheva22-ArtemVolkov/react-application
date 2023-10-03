@@ -16,4 +16,5 @@ export default interface ChatRoom {
     joinToChat(chatName: string): Promise<any>
     updateGroup(chatGroup: ChatGroupType): Promise<any>
     deleteMessage(messageId: string): Promise<any>
+    updateAccount(image: any): Promise<any>
 }

@@ -1,6 +1,5 @@
 import { Close } from "@mui/icons-material"
 import { AppBar, Toolbar, IconButton, Typography, Button, Grid, TextField, FormControlLabel, Switch, List, ListItem, Checkbox, ListItemButton, ListItemAvatar, Avatar, ListItemText } from "@mui/material"
-import { chatRoomService } from "../../config/service-config"
 import ChatGroupType from "../../model/ChatGroupType"
 import { useState } from "react"
 import { useDispatchCode } from "../../hooks/hooks"
@@ -14,15 +13,13 @@ type Props = {
     initMembers?: string[]
     initChatName?: string
     headerText: string
-
+    initWaitings?: string[]
 }
 
 const AUTH_ITEM = "auth-item"
 const currentUser = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
 
-
-
-export const ChatGroupForm: React.FC<Props> = ({ initChatName = '', headerText, submitFn, handleToggleDialog, handleToggleRefreshGroups, personal, initAdmins, initMembers }) => {
+export const ChatGroupForm: React.FC<Props> = ({ initChatName = '', headerText, submitFn, handleToggleDialog, handleToggleRefreshGroups, personal, initAdmins, initMembers, initWaitings }) => {
 
     const dispatch = useDispatchCode();
     const [createGroupIsOpen, setCreateGroupIsOpen] = useState<boolean>(false)
@@ -118,11 +115,12 @@ export const ChatGroupForm: React.FC<Props> = ({ initChatName = '', headerText, 
             </Grid>
             <Grid container item xs={8}>
                 <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-                    {personal.filter(p => p != currentUser).map((personalName) => {
-                        const labelId = `checkbox-list-secondary-label-${personalName}`;
+                    {personal.filter(p => p != currentUser.email).map((personalName) => {
+                        const labelId = `checkbox-list-secondary-label-${personalName}`;                        
                         return (
                             <ListItem
                                 key={personalName}
+                                sx={{ backgroundColor: initWaitings?.indexOf(personalName) !== -1 ? 'lightgray' : '' }}
                                 secondaryAction={
                                     <>
                                         <Checkbox
