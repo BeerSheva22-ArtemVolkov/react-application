@@ -1,17 +1,15 @@
 import { Close } from "@mui/icons-material"
 import { AppBar, Toolbar, IconButton, Typography, Button, Grid, TextField, FormControlLabel, Switch, List, ListItem, Checkbox, ListItemButton, ListItemAvatar, Avatar, ListItemText, ImageList, ImageListItem } from "@mui/material"
-import ChatGroupType from "../../model/ChatGroupType"
 import { useState } from "react"
 import { useDispatchCode } from "../../hooks/hooks"
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import image from './1.png'
 
 type Props = {
     submitFn: (accountImage: any) => Promise<any>
     handleToggleDialog: () => void
+    initAvatar: string
 }
-
-const AUTH_ITEM = "auth-item"
-const currentUser = JSON.parse(localStorage.getItem(AUTH_ITEM) || '{}');
 
 const toBase64 = (file: any) => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -20,19 +18,23 @@ const toBase64 = (file: any) => new Promise((resolve, reject) => {
     reader.onerror = reject;
 });
 
-export const AccountSettingsForm: React.FC<Props> = ({ submitFn, handleToggleDialog }) => {
+export const AccountSettingsForm: React.FC<Props> = ({ submitFn, handleToggleDialog, initAvatar }) => {
 
     const dispatch = useDispatchCode();
     const [imageToLoad, setImageToLoad] = useState<any>(null)
-    const [imageToShow, setImageToShow] = useState<any>(null)
+    const [imageToShow, setImageToShow] = useState<any>(initAvatar)
 
     const onImageChange = async (event: any) => {
-
         const imageTarget = event.target.files
+        const image = imageTarget ? imageTarget[0] : ''
+        console.log(imageTarget, image);
+
         if (imageTarget && imageTarget[0]) {
-            setImageToShow(URL.createObjectURL(imageTarget[0]));
-            const res = await toBase64(imageTarget[0])
+            setImageToShow(URL.createObjectURL(image));
+            const res = await toBase64(image)
             setImageToLoad(res);
+        } else {
+            setImageToShow(null);
         }
     }
 
@@ -53,7 +55,8 @@ export const AccountSettingsForm: React.FC<Props> = ({ submitFn, handleToggleDia
                 <Button autoFocus color="inherit" onClick={() => {
                     submitFn(imageToLoad)
                         .then(() => {
-                            console.log('success account update');
+                            handleToggleDialog()
+                            dispatch('', 'Avatar updated')
                         })
                         .catch((err) => dispatch(err.message, ''))
                 }}>
@@ -66,9 +69,12 @@ export const AccountSettingsForm: React.FC<Props> = ({ submitFn, handleToggleDia
                 <Button component="label" variant="contained" startIcon={<CloudUploadIcon />}>
                     <input type="file" onChange={onImageChange} className="filetype" />
                 </Button>
+                <Button component="label" variant="contained" onClick={onImageChange}>
+                    Delete image
+                </Button>
                 <ImageList>
                     <ImageListItem>
-                        <img alt="preview image" src={imageToShow} />
+                        <img src={imageToShow ? imageToShow : image} style={{ borderRadius: '50%', width: '100px', height: '100px' }} />
                     </ImageListItem>
                 </ImageList>
             </Grid>

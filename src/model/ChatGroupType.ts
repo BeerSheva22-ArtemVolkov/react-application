@@ -2,7 +2,8 @@ type ChatGroupType = {
     chatName: string,
     adminsIds: string[],
     membersIds: string[],
-    isOpened: boolean
+    isOpened: boolean,
+    image: string
 }
 
 export default ChatGroupType;
