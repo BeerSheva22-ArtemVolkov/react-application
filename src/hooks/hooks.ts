@@ -4,6 +4,7 @@ import { codeActions } from "../redux/slices/codeSlice";
 import { useEffect, useState } from "react";
 import { Subscription } from "rxjs";
 import { chatRoomService } from "../config/service-config";
+import MessageType from "../model/MessageType";
 
 export function useDispatchCode() {
     const dispatch = useDispatch();
@@ -25,14 +26,14 @@ export function useDispatchCode() {
     }
 }
 
-export function useSelectorEmployees() {
+export function useSelectorNewMessage() {
     const dispatch = useDispatchCode();
-    const [newMessage, setNewMessage] = useState<String>('');
+    const [newMessage, setNewMessage] = useState<MessageType>();
 
     useEffect(() => {
         const subscription: Subscription = chatRoomService.getNewewst()
             .subscribe({
-                next(message: string) {
+                next(message: MessageType) {
                     let errorMessage: string = '';
                     setNewMessage(message);
                     dispatch(errorMessage, '');
@@ -60,21 +61,3 @@ export function useSelectorActiveUsers() {
     }, []);
     return activeUsers;
 }
-
-// export function useSelectorChats() {
-//     const dispatch = useDispatchCode();
-//     const [groups, setGroups] = useState<string>('');
-
-//     useEffect(() => {
-//         const subscription: Subscription = employeesService.getNewewst()
-//             .subscribe({
-//                 next(message: string) {
-//                     let errorMessage: string = '';
-//                     setGroups(message);
-//                     dispatch(errorMessage, '');
-//                 }
-//             });
-//         return () => subscription.unsubscribe();
-//     }, []);
-//     return groups;
-// }

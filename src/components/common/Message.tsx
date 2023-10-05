@@ -55,13 +55,14 @@ const Message: React.FC<Props> = ({ mes, deleteFn, handleToggleRefreshMessages }
                         'aria-labelledby': 'basic-button',
                     }}
                 >
-                    <MenuItem onClick={() => {
+                    <MenuItem onClick={async () => {
                         deleteFn(mes._id)
                             .then(() => {
                                 dispatch('', `Message <${mes._id}> deleted`)
                                 handleToggleRefreshMessages()
                             })
                             .catch((error) => {
+                                
                                 dispatch(`Error deleeting message: ${error.message}`, '')
                             })
                     }}>Delete message</MenuItem>

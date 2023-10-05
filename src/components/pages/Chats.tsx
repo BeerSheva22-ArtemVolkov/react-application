@@ -1,11 +1,10 @@
-import { Avatar, Badge, Box, Button, Dialog, Divider, Drawer, FormControl, Grid, Icon, IconButton, InputBase, InputLabel, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Select, SelectChangeEvent, Slide, TextField, Toolbar } from "@mui/material"
+import { Avatar, Badge, Box, Button, Chip, Dialog, Divider, Drawer, FormControl, Grid, Icon, IconButton, InputBase, InputLabel, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Select, SelectChangeEvent, Slide, TextField, Toolbar } from "@mui/material"
 import { useState, useEffect } from "react";
 import { chatRoomService } from "../../config/service-config";
-import { Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check, Close, Settings, Search } from "@mui/icons-material";
+import { Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check, Settings } from "@mui/icons-material";
 import { useSelectorAuth } from "../../redux/store";
-import { useDispatchCode, useSelectorActiveUsers, useSelectorEmployees } from "../../hooks/hooks";
+import { useDispatchCode, useSelectorActiveUsers, useSelectorNewMessage } from "../../hooks/hooks";
 import Message from "../common/Message";
-import { Dayjs } from "dayjs";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import React from "react";
@@ -14,6 +13,9 @@ import { ChatGroupForm } from "../forms/ChatGroupForm";
 import ChatGroupType from "../../model/ChatGroupType";
 import { AccountSettingsForm } from "../forms/AccountSettingsForm";
 import ChatAvatar from "../common/ChatAvatar";
+import MessageType from "../../model/MessageType";
+import ChatType from "../../model/ChatType";
+import ChatFilterType from "../../model/ChatFilterType";
 
 let drawerWidth = 240
 
@@ -30,37 +32,29 @@ const Employees: React.FC = () => {
 
     const dispatch = useDispatchCode();
     const userData = useSelectorAuth();
-    const newestMessage = useSelectorEmployees();
+    const newestMessage = useSelectorNewMessage();
     const activeUsers = useSelectorActiveUsers();
 
-    const [wsMessage, setWSMessage] = useState<String>('');
-    const [messages, setMessages] = useState<any[]>([]);
+    const [newMessage, setNewMessage] = useState<String>('');
+    const [messages, setMessages] = useState<MessageType[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
     const [accounts, setAccounts] = useState<any[]>([]);
-    const [selectedIndex, setSelectedIndex] = useState<number>(0)
-    const [selectedChatMembers, setSelectedChatMembers] = useState<string[]>([])
-    const [selectedChatAdmins, setSelectedChatAdmins] = useState<string[]>([])
-    const [selectedChatRequests, setSelectedChatRequests] = useState<string[]>([])
-    const [selectedChat, setSelectedChat] = useState<string | undefined>()
-    const [selectedChatType, setSelectedChatType] = useState<string | undefined>()
-    const [selectedChatImage, setSelectedChatImage] = useState<string>('')
-    const [filterFrom, setFilterFrom] = useState<string>('')
-    const [includeFrom, setIncludeFrom] = useState<boolean>(false)
-    const [filterDateTimeFrom, setFilterDateTimeFrom] = useState<Dayjs | null>()
-    const [filterDateTimeTo, setFilterDateTimeTo] = useState<Dayjs | null>()
+    const [selectedChat, setSelectedChat] = useState<ChatType>({ name: undefined, index: 0, members: [], admins: [], requests: [], class: undefined, image: '' })
+    const [filter, setFilter] = useState<ChatFilterType>({ from: '', includeFrom: false, dateTimeFrom: null, dateTimeTo: null })
     const [refreshMessages, setRefreshMessages] = useState<boolean>(false)
     const [refreshGroups, setRefreshGroups] = useState<boolean>(false)
     const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false)
     const [updateDialogOpen, setUpdateDialogOpen] = useState<boolean>(false)
     const [accountSettingsDialogOpen, setAccountSettingsDialogOpen] = useState<boolean>(false)
-    const [drawerOpen, setDrawerOpen] = useState<boolean>(true);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+    const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
     const [groupSearch, setGroupSearch] = useState<string>('')
     const [groupSearchResult, setGroupSearchResult] = useState<any[]>([])
     const [searchGroupsAnchor, setSearchGroupsAnchor] = useState<null | HTMLElement>(null);
-    const messageContextOpen = Boolean(searchGroupsAnchor);
     const [currentUserImage, setCurrentUserImage] = useState<string>('')
-    const open = Boolean(anchorEl);
+
+    const open = Boolean(settingsAnchor);
+    const messageContextOpen = Boolean(searchGroupsAnchor);
 
     const handleSearchGroupsOpen = (event: React.MouseEvent<HTMLLIElement>) => {
         setSearchGroupsAnchor(event.currentTarget);
@@ -82,13 +76,20 @@ const Employees: React.FC = () => {
     }, [refreshGroups])
 
     useEffect(() => {
-        if (!selectedChat) {
+        if (!selectedChat.name) {
             setMessages([]);
         }
-        if (selectedChat && selectedChatType) {
-            chatRoomService.getFromChat(selectedChat, includeFrom, selectedChatType, filterFrom, filterDateTimeFrom?.toISOString() || '', filterDateTimeTo?.toISOString() || '').then(messages => setMessages(messages));
+        if (selectedChat.name && selectedChat.class) {
+            chatRoomService.getFromChat(selectedChat.name, filter.includeFrom, selectedChat.class, filter.from, filter.dateTimeFrom?.toISOString() || '', filter.dateTimeTo?.toISOString() || '')
+                .then(messages => setMessages(messages));
         }
-    }, [newestMessage, selectedChat, refreshMessages])
+    }, [selectedChat.name, refreshMessages])
+
+    useEffect(() => {
+        if (newestMessage) {
+            setMessages([...messages, newestMessage])
+        }
+    }, [newestMessage])
 
     useEffect(() => {
         const searchFn = setTimeout(async () => {
@@ -102,7 +103,7 @@ const Employees: React.FC = () => {
     }, [groupSearch])
 
     const handleFilterFromChange = (event: SelectChangeEvent) => {
-        setFilterFrom(event.target.value as string);
+        setFilter({ ...filter, from: event.target.value })
     }
 
     const handleDrawerToggle = () => {
@@ -119,9 +120,7 @@ const Employees: React.FC = () => {
     }
 
     const handleClearFilters = () => {
-        setFilterFrom('')
-        setFilterDateTimeFrom(null)
-        setFilterDateTimeTo(null)
+        setFilter({ ...filter, from: '', dateTimeFrom: null, dateTimeTo: null })
         handleToggleRefreshMessages()
     }
 
@@ -137,13 +136,26 @@ const Employees: React.FC = () => {
         setAccountSettingsDialogOpen(!accountSettingsDialogOpen)
     }
 
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
+    const handleSettingsOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setSettingsAnchor(event.currentTarget);
     };
 
-    const handleClose = () => {
-        setAnchorEl(null);
+    const handleSettingsClose = () => {
+        setSettingsAnchor(null);
     };
+
+    let lastDate: Date = new Date(-8640000000000000)
+
+    function dtDivider(date: Date) {
+        if (new Date(date) > new Date(lastDate)) {
+            lastDate = date
+            return <Divider>
+                <Chip label={date.toLocaleDateString()} />
+            </Divider>
+        } else {
+            return <></>
+        }
+    }
 
     return <Box sx={{ display: 'flex' }}>
         <Drawer
@@ -168,54 +180,18 @@ const Employees: React.FC = () => {
             <List>
                 {accounts.map((account, index) => (
                     <ChatAvatar
+                        key={account._id + "_" + account.index}
                         name={account._id}
                         image={account.image}
                         drawerOpen={drawerOpen}
                         buttonType={"Account"}
                         badgeColor={activeUsers.includes(account._id) ? 'green' : 'gray'}
                         buttonClickFn={() => {
-                            setSelectedChat(account._id);
-                            selectedChatType != "to" && setSelectedChatType("to");
-                            setIncludeFrom(true);
-                            setSelectedIndex(index);
-                            setSelectedChatMembers([account._id, userData?.email]);
+                            setSelectedChat({ ...selectedChat, name: account._id, class: "to", index, members: [account._id, userData?.email] })
+                            setFilter({ ...filter, includeFrom: true })
                         }}
-                        buttonColor={index != selectedIndex ? 'white' : 'gray'}
+                        buttonColor={index != selectedChat.index ? 'white' : 'gray'}
                     />
-                    // <ListItem key={account._id} disablePadding onClick={() => {
-                    //     setSelectedChat(account._id)
-                    //     selectedChatType != "to" && setSelectedChatType("to")
-                    //     setIncludeFrom(true)
-                    //     setSelectedIndex(index)
-                    //     setSelectedChatMembers([account._id, userData?.email])
-                    // }} >
-                    //     <ListItemButton sx={{
-                    //         minHeight: 48,
-                    //         justifyContent: 'center',
-                    //         px: 2.5,
-                    //         backgroundColor: index != selectedIndex ? 'white' : 'gray'
-                    //     }}>
-                    //         {/* <Badge badgeContent={0} color="info"> */}
-                    //         <ListItemIcon sx={{
-                    //             minWidth: 0,
-                    //             justifyContent: 'center'
-                    //         }}>
-                    //             <Badge
-                    //                 overlap="circular"
-                    //                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    //                 badgeContent={
-                    //                     <Avatar sx={{ width: 12, height: 12, backgroundColor: activeUsers.includes(account._id) ? 'green' : 'gray' }}>{""}</Avatar>
-                    //                 }
-                    //             >
-                    //                 <Avatar src={account.image} sx={{ width: 36, height: 36 }}>
-                    //                     {account._id}
-                    //                 </Avatar>
-                    //             </Badge>
-                    //         </ListItemIcon>
-                    //         {/* </Badge> */}
-                    //         <ListItemText primary={account._id} sx={{ opacity: drawerOpen ? 0 : 1 }} />
-                    //     </ListItemButton>
-                    // </ListItem>
                 ))}
             </List>
             <Divider />
@@ -231,7 +207,7 @@ const Employees: React.FC = () => {
                 />
             </Paper>
             <List>
-                {groupSearchResult.map((group, index) => (
+                {groupSearchResult.map(group => (
                     <>
                         <ChatAvatar
                             name={group.chatName}
@@ -244,29 +220,6 @@ const Employees: React.FC = () => {
                             buttonType={"SearchGroup"}
                             buttonColor={'lightblue'}
                         />
-                        {/* <ListItem key={group._id} disablePadding
-                            onContextMenu={(e) => {
-                                e.preventDefault();
-                                handleSearchGroupsOpen(e);
-                            }}
-                        >
-                            <ListItemButton color="neutral" sx={{
-                                minHeight: 48,
-                                justifyContent: 'center',
-                                px: 2.5,
-                                backgroundColor: 'lightblue'
-                            }}>
-                                <ListItemIcon sx={{
-                                    minWidth: 0,
-                                    justifyContent: 'center',
-                                }}>
-                                    <Avatar sx={{ width: 36, height: 36 }} src={group.image}>
-                                        {group.chatName}
-                                    </Avatar>
-                                </ListItemIcon>
-                                <ListItemText primary={group.chatName} sx={{ opacity: drawerOpen ? 0 : 1 }} />
-                            </ListItemButton>
-                        </ListItem> */}
                         <Menu
                             id="basic-menu"
                             anchorEl={searchGroupsAnchor}
@@ -288,7 +241,7 @@ const Employees: React.FC = () => {
                                             dispatch('', res.message)
                                         })
                                         .catch((error) => {
-                                            dispatch(`Error deleeting message: ${error.message}`, '')
+                                            dispatch(`Error request to join the group: ${error.message}`, '')
                                         })
                                 }}
                             >Join the chat</MenuItem>
@@ -304,47 +257,12 @@ const Employees: React.FC = () => {
                         image={group.image}
                         drawerOpen={drawerOpen}
                         buttonType={"Group"}
-                        buttonColor={index + accounts.length != selectedIndex ? 'white' : 'gray'}
+                        buttonColor={index + accounts.length != selectedChat.index ? 'white' : 'gray'}
                         buttonClickFn={() => {
-                            setSelectedChat(group.chatName)
-                            selectedChatType != "group" && setSelectedChatType("group")
-                            setIncludeFrom(false)
-                            setSelectedIndex(index + accounts.length)
-                            setSelectedChatMembers(group.membersIds)
-                            setSelectedChatAdmins(group.adminsIds)
-                            setSelectedChatRequests(group.waitingIds)
-                            setSelectedChatImage(group.image)
+                            setSelectedChat({ ...selectedChat, name: group.chatName, class: "group", index: index + accounts.length, members: group.membersIds, admins: group.adminsIds, requests: group.waitingIds, image: group.image })
+                            setFilter({ ...filter, includeFrom: false })
                         }}
                     />
-                    // <ListItem key={group._id} disablePadding
-                    //     onClick={() => {
-                    //         setSelectedChat(group.chatName)
-                    //         selectedChatType != "group" && setSelectedChatType("group")
-                    //         setIncludeFrom(false)
-                    //         setSelectedIndex(index + accounts.length)
-                    //         setSelectedChatMembers(group.membersIds)
-                    //         setSelectedChatAdmins(group.adminsIds)
-                    //         setSelectedChatRequests(group.waitingIds)
-                    //         setSelectedChatImage(group.image)
-                    //     }}
-                    // >
-                    //     <ListItemButton color="neutral" sx={{
-                    //         minHeight: 48,
-                    //         justifyContent: 'center',
-                    //         px: 2.5,
-                    //         backgroundColor: index + accounts.length != selectedIndex ? 'white' : 'gray'
-                    //     }}>
-                    //         <ListItemIcon sx={{
-                    //             minWidth: 0,
-                    //             justifyContent: 'center',
-                    //         }}>
-                    //             <Avatar sx={{ width: 36, height: 36 }} src={group.image}>
-                    //                 {group.chatName}
-                    //             </Avatar>
-                    //         </ListItemIcon>
-                    //         <ListItemText primary={group.chatName} sx={{ opacity: drawerOpen ? 0 : 1 }} />
-                    //     </ListItemButton>
-                    // </ListItem>
                 ))}
             </List>
             <Divider />
@@ -378,11 +296,11 @@ const Employees: React.FC = () => {
                             <Select
                                 labelId="filter-from-select-label"
                                 id="demo-simple-select"
-                                value={filterFrom}
+                                value={filter.from}
                                 label="Age"
                                 onChange={handleFilterFromChange}
                             >
-                                {selectedChatMembers.map(member => <MenuItem value={member}>{member}</MenuItem>)}
+                                {selectedChat.members.map(member => <MenuItem value={member}>{member}</MenuItem>)}
                             </Select>
                         </FormControl>
                     </Grid>
@@ -390,8 +308,8 @@ const Employees: React.FC = () => {
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                             <DateTimePicker
                                 label="Date time from"
-                                value={filterDateTimeFrom}
-                                onChange={(newValue) => setFilterDateTimeFrom(newValue)}
+                                value={filter.dateTimeFrom}
+                                onChange={newValue => setFilter({ ...filter, dateTimeFrom: newValue })}
                             />
                         </LocalizationProvider>
                     </Grid>
@@ -399,8 +317,8 @@ const Employees: React.FC = () => {
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                             <DateTimePicker
                                 label="Date time from"
-                                value={filterDateTimeTo}
-                                onChange={(newValue) => setFilterDateTimeTo(newValue)}
+                                value={filter.dateTimeTo}
+                                onChange={newValue => setFilter({ ...filter, dateTimeFrom: newValue })}
                             />
                         </LocalizationProvider>
                     </Grid>
@@ -411,42 +329,54 @@ const Employees: React.FC = () => {
                         <IconButton aria-label="confirm" size="large" onClick={handleToggleRefreshMessages}>
                             <Check />
                         </IconButton>
-                        {<IconButton aria-label="settings" size="large" onClick={handleClick}>
-                            <Badge badgeContent={selectedChatType == 'group' ? selectedChatRequests.length : 0} color="info">
+                        <IconButton aria-label="settings" size="large" onClick={handleSettingsOpen}>
+                            <Badge badgeContent={selectedChat.class == 'group' ? selectedChat.requests.length : 0} color="info">
                                 <Settings />
                             </Badge>
-                        </IconButton>}
+                        </IconButton>
                         <div>
                             <Menu
                                 id="basic-menu"
-                                anchorEl={anchorEl}
+                                anchorEl={settingsAnchor}
                                 open={open}
-                                onClose={handleClose}
+                                onClose={handleSettingsClose}
                                 MenuListProps={{
                                     'aria-labelledby': 'basic-button',
                                 }}
                             >
                                 <MenuItem onClick={handleToggleAccountSettingsDialog}>Account settings</MenuItem>
-                                {selectedChatType == 'group' && <MenuItem onClick={() => {
-                                    chatRoomService.deleteUserFromChat(selectedChat!, userData!.email)
+                                {selectedChat.class == 'group' && <MenuItem onClick={() => {
+                                    chatRoomService.deleteUserFromChat(selectedChat.name!, userData!.email)
                                         .then(() => {
                                             dispatch('', `You have left the chat <${selectedChat}>`)
-                                            setSelectedChat(undefined);
-                                            setSelectedChatType(undefined);
+                                            setSelectedChat({ ...selectedChat, name: undefined, class: undefined })
                                             handleToggleRefreshGroups();
                                         })
                                         .catch((error) => console.log(error))
                                 }}>Left the chat</MenuItem>}
-                                {selectedChatType == 'group' && <MenuItem onClick={handleToggleUpdateGroupDialog}>Chat settings</MenuItem>}
+                                {selectedChat.class == 'group' && <MenuItem onClick={handleToggleUpdateGroupDialog}>Chat settings</MenuItem>}
                             </Menu>
                         </div>
                     </Grid>
                 </Grid>
             </Box>
             <Box component="main" sx={{ p: 1, flexGrow: 1, overflow: "auto", height: 'calc(80vh - 80px)' }}>
-                {(messages).map((message) => (
-                    <Message mes={message} key={message._id} deleteFn={(mes) => chatRoomService.deleteMessage(mes)} handleToggleRefreshMessages={handleToggleRefreshMessages} />
-                ))}
+                {messages.length > 0
+                    ?
+                    messages.map(message => (
+                        <>
+                            {dtDivider(new Date(message.sendingDateTime.slice(0, 10)))}
+                            <Message
+                                mes={message}
+                                key={message._id}
+                                deleteFn={(mes) => chatRoomService.deleteMessage(mes)}
+                                handleToggleRefreshMessages={handleToggleRefreshMessages}
+                            />
+                        </>
+                    ))
+                    :
+                    <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column', fontSize: 'xxx-large' }}>No messages yet</div>
+                }
             </Box>
             <Box sx={{ p: 2, backgroundColor: "background.default", height: '40px' }}>
                 <Grid container spacing={2}>
@@ -456,8 +386,8 @@ const Employees: React.FC = () => {
                             fullWidth
                             placeholder="Type a message"
                             variant="outlined"
-                            value={wsMessage}
-                            onChange={(e) => setWSMessage(e.target.value)}
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
                         />
                     </Grid>
                     <Grid item xs={2}>
@@ -467,8 +397,8 @@ const Employees: React.FC = () => {
                             variant="contained"
                             endIcon={<Send />}
                             onClick={() => {
-                                chatRoomService.sendWSMessage(wsMessage, selectedChatType == "to" ? selectedChat! : '', selectedChatType == "group" ? selectedChat! : '')
-                                setWSMessage("")
+                                chatRoomService.sendWSMessage(newMessage, selectedChat.class == "to" ? selectedChat.name! : '', selectedChat.class == "group" ? selectedChat.name! : '')
+                                setNewMessage("")
                             }}
                         >
                             Send
@@ -483,7 +413,7 @@ const Employees: React.FC = () => {
             onClose={handleToggleCreateGroupDialog}
             TransitionComponent={Transition}
         >
-            {<ChatGroupForm
+            <ChatGroupForm
                 headerText="Create chat group"
                 handleToggleDialog={handleToggleCreateGroupDialog}
                 handleToggleRefreshGroups={handleToggleRefreshGroups}
@@ -492,7 +422,7 @@ const Employees: React.FC = () => {
                     return chatRoomService.createGroup(chatGroup);
                 }}
                 initAvatar={""}
-            />}
+            />
         </Dialog>
         <Dialog
             fullScreen
@@ -500,8 +430,8 @@ const Employees: React.FC = () => {
             onClose={handleToggleUpdateGroupDialog}
             TransitionComponent={Transition}
         >
-            {<ChatGroupForm
-                initChatName={selectedChat}
+            <ChatGroupForm
+                initChatName={selectedChat.name}
                 headerText="Update chat group"
                 handleToggleDialog={handleToggleUpdateGroupDialog}
                 handleToggleRefreshGroups={handleToggleRefreshGroups}
@@ -509,11 +439,11 @@ const Employees: React.FC = () => {
                 submitFn={function (chatGroup: ChatGroupType): Promise<any> {
                     return chatRoomService.updateGroup(chatGroup);
                 }}
-                initAdmins={selectedChatAdmins}
-                initMembers={selectedChatMembers}
-                initWaitings={selectedChatRequests}
-                initAvatar={selectedChatImage}
-            />}
+                initAdmins={selectedChat.admins}
+                initMembers={selectedChat.members}
+                initWaitings={selectedChat.requests}
+                initAvatar={selectedChat.image}
+            />
         </Dialog>
         <Dialog
             fullScreen

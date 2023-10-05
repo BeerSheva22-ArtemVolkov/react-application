@@ -1,13 +1,11 @@
 import { Observable } from "rxjs";
 import ChatGroupType from "../../model/ChatGroupType";
+import MessageType from "../../model/MessageType";
 
 export default interface ChatRoom {
-    // addEmployee(empl: Employee): Promise<Employee>;
-    getNewewst(): Observable<string>;
+    getNewewst(): Observable<MessageType>;
     getActive(): Observable<any[]>
-    getFromChat(chatName: string, includeFrom: boolean, type: string, filterFrom: string, filterDateTimeFrom: string, filterDateTimeTo: string): Promise<any>
-    // deleteEmployee(id: any): Promise<void>;
-    // updateEmployee(empl: Employee): Promise<Employee>;
+    getFromChat(chatName: string, includeFrom: boolean, type: string, filterFrom: string, filterDateTimeFrom: string, filterDateTimeTo: string): Promise<MessageType[]>
     sendWSMessage(message: any, to: string, group: string): void
     getGroups(filterName?: string): Promise<any>
     getAllChats(): Promise<any>

@@ -3,7 +3,6 @@ import { AppBar, Toolbar, IconButton, Typography, Button, Grid, TextField, FormC
 import ChatGroupType from "../../model/ChatGroupType"
 import { useState } from "react"
 import { useDispatchCode } from "../../hooks/hooks"
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import image from './1.png'
 
 type Props = {

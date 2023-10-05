@@ -1,1 +1,0 @@
-export type NotifierActionsType = "ADD" | "DELETE" | "UPDATE";

@@ -1,6 +1,4 @@
 import { Avatar, Badge, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
-import { group } from "console";
-import ChatGroupType from "../../model/ChatGroupType";
 
 type Props = {
     name: string

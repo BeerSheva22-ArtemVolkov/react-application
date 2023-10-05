@@ -20,6 +20,11 @@
             "to": "/signin",
             "label": "Sign In",
             "order": 2
+        },
+        {
+            "to": "/registration",
+            "label": "Registration",
+            "order": 3
         }
     ]
 }
