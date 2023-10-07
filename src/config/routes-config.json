@@ -12,7 +12,13 @@
             "order": 1000
         }
     ],
-    "admin": [],
+    "admin": [
+        {
+            "to": "/admin",
+            "label": "Admin page",
+            "order": 999
+        }
+    ],
     "development": [],
     "noadmin": [],
     "noauthenticated": [

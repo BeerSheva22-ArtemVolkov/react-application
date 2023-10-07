@@ -1,4 +1,4 @@
-import { Avatar, Badge, Box, Button, Chip, Dialog, Divider, Drawer, FormControl, Grid, Icon, IconButton, InputBase, InputLabel, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Select, SelectChangeEvent, Slide, TextField, Toolbar } from "@mui/material"
+import { Badge, Box, Button, Chip, Dialog, Divider, Drawer, FormControl, Grid, Icon, IconButton, InputBase, InputLabel, List, ListItemText, Menu, MenuItem, Paper, Select, SelectChangeEvent, Slide, TextField, Toolbar } from "@mui/material"
 import { useState, useEffect } from "react";
 import { chatRoomService } from "../../config/service-config";
 import { Send, ChevronRight, ChevronLeft, GroupAdd, Clear, Check, Settings } from "@mui/icons-material";
@@ -16,6 +16,7 @@ import ChatAvatar from "../common/ChatAvatar";
 import MessageType from "../../model/MessageType";
 import ChatType from "../../model/ChatType";
 import ChatFilterType from "../../model/ChatFilterType";
+import MessagesCounterType from "../../model/MessagesCounterType";
 
 let drawerWidth = 240
 
@@ -52,8 +53,9 @@ const Employees: React.FC = () => {
     const [groupSearchResult, setGroupSearchResult] = useState<any[]>([])
     const [searchGroupsAnchor, setSearchGroupsAnchor] = useState<null | HTMLElement>(null);
     const [currentUserImage, setCurrentUserImage] = useState<string>('')
+    const [newMessageCount, setNewMessageCount] = useState<MessagesCounterType[]>([])
 
-    const open = Boolean(settingsAnchor);
+    const accountSettingsContextOpen = Boolean(settingsAnchor);
     const messageContextOpen = Boolean(searchGroupsAnchor);
 
     const handleSearchGroupsOpen = (event: React.MouseEvent<HTMLLIElement>) => {
@@ -68,6 +70,16 @@ const Employees: React.FC = () => {
         chatRoomService.getAllChats().then(group => {
             setGroups(group.groups)
             setAccounts(group.personal)
+            group.groups.forEach((group: any) => {
+                if (newMessageCount.findIndex(o => o.chatName == group.chatName) == -1) {
+                    newMessageCount.push({ chatName: group.chatName, count: 0 })
+                }
+            }) 
+            group.personal.forEach((account: any) => {
+                if (newMessageCount.findIndex(o => o.chatName == account._id) == -1) {
+                    newMessageCount.push({ chatName: account._id, count: 0 })
+                }
+            })
             const account = group.personal.find((account: any) => account._id == userData?.email)
             if (account) {
                 setCurrentUserImage(account.image);
@@ -82,12 +94,40 @@ const Employees: React.FC = () => {
         if (selectedChat.name && selectedChat.class) {
             chatRoomService.getFromChat(selectedChat.name, filter.includeFrom, selectedChat.class, filter.from, filter.dateTimeFrom?.toISOString() || '', filter.dateTimeTo?.toISOString() || '')
                 .then(messages => setMessages(messages));
+            //
+            const prev = newMessageCount.map(o => {
+                if (o.chatName == selectedChat.name) {
+                    o.count = 0
+                }
+                return o
+            })
+            setNewMessageCount(prev)
         }
     }, [selectedChat.name, refreshMessages])
 
     useEffect(() => {
         if (newestMessage) {
-            setMessages([...messages, newestMessage])
+            // сообщение отображается, если
+            // 1. это сообщение отправлено мной 
+            if (userData?.email == newestMessage.from) {
+                setMessages([...messages, newestMessage])
+            }
+            // 2. это сообщение отправлено мне
+            else if (selectedChat.name == newestMessage.from) {
+                setMessages([...messages, newestMessage])
+            }
+            // 3. это сообщение пришло в группу, где состою я
+            // if (selectedChat.name == newestMessage.from || selectedChat.name == newestMessage.messageObj.group || userData?.email == newestMessage.from) {
+            //     setMessages([...messages, newestMessage])
+            else {
+                const prev = newMessageCount.map(o => {
+                    if (o.chatName == newestMessage.from) {
+                        o.count++
+                    }
+                    return o
+                })
+                setNewMessageCount(prev)
+            }
         }
     }, [newestMessage])
 
@@ -191,6 +231,7 @@ const Employees: React.FC = () => {
                             setFilter({ ...filter, includeFrom: true })
                         }}
                         buttonColor={index != selectedChat.index ? 'white' : 'gray'}
+                        newMessageCounter={newMessageCount.find(m => m.chatName == account._id)?.count || 0}
                     />
                 ))}
             </List>
@@ -259,9 +300,10 @@ const Employees: React.FC = () => {
                         buttonType={"Group"}
                         buttonColor={index + accounts.length != selectedChat.index ? 'white' : 'gray'}
                         buttonClickFn={() => {
-                            setSelectedChat({ ...selectedChat, name: group.chatName, class: "group", index: index + accounts.length, members: group.membersIds, admins: group.adminsIds, requests: group.waitingIds, image: group.image })
-                            setFilter({ ...filter, includeFrom: false })
+                            setSelectedChat({ ...selectedChat, name: group.chatName, class: "group", index: index + accounts.length, members: group.membersIds, admins: group.adminsIds, requests: group.waitingIds, image: group.image });
+                            setFilter({ ...filter, includeFrom: false });
                         }}
+                        newMessageCounter={newMessageCount.find(m => m.chatName == group.chatName)?.count || 0}
                     />
                 ))}
             </List>
@@ -338,7 +380,7 @@ const Employees: React.FC = () => {
                             <Menu
                                 id="basic-menu"
                                 anchorEl={settingsAnchor}
-                                open={open}
+                                open={accountSettingsContextOpen}
                                 onClose={handleSettingsClose}
                                 MenuListProps={{
                                     'aria-labelledby': 'basic-button',

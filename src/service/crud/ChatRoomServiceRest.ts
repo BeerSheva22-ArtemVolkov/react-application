@@ -75,6 +75,18 @@ export default class ChatRoomServiceRest implements ChatRoom {
         // this.cache = new Cache;
     }
 
+    async getAllMessages(): Promise<any> {
+        const res = await fetch(this.urlService + `/messages/all`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem(AUTH_DATA_JWT) || ''
+            }
+        })
+        const data = await res.json();
+        return data;
+    }
+
     async updateAccount(image: string): Promise<any> {
         const res = await fetch(this.urlService + `/users`, {
             method: "PUT",
@@ -109,8 +121,6 @@ export default class ChatRoomServiceRest implements ChatRoom {
             }
         })
         const data = await res.json();
-        console.log(res, data);
-        
         return data;
     }
 

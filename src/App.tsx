@@ -18,6 +18,7 @@ import { authService } from "./config/service-config";
 import { Alert, Drawer, Snackbar } from "@mui/material";
 import { codeActions } from "./redux/slices/codeSlice";
 import Registration from "./components/pages/Registration";
+import Admin from "./components/pages/Admin";
 
 const { always, authenticated, admin, noadmin, noauthenticated, development } = routesConfig;
 type RouteTypeOrder = RouteType & { order?: number }
@@ -79,6 +80,7 @@ const App: React.FC = () => {
                 <Route path="signin" element={<SignIn />} />
                 <Route path="registration" element={<Registration />} />
                 <Route path="signout" element={<SignOut />} />
+                <Route path="admin" element={<Admin />} />
                 <Route path="/*" element={<NotFound />} />
             </Route>
         </Routes>

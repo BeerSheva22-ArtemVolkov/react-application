@@ -9,9 +9,10 @@ type Props = {
     buttonType: "Group" | "Account" | "SearchGroup"
     badgeColor?: string
     buttonColor: string
+    newMessageCounter?: number
 }
 
-const ChatAvatar: React.FC<Props> = ({ name, image, buttonClickFn, contextClickFn, drawerOpen, buttonType, badgeColor, buttonColor }) => {
+const ChatAvatar: React.FC<Props> = ({ name, image, buttonClickFn, contextClickFn, drawerOpen, buttonType, badgeColor, buttonColor, newMessageCounter }) => {
     return <ListItem
         key={name}
         disablePadding
@@ -32,7 +33,7 @@ const ChatAvatar: React.FC<Props> = ({ name, image, buttonClickFn, contextClickF
                     overlap="circular"
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                     badgeContent={
-                        <Avatar sx={{ width: 12, height: 12, backgroundColor: badgeColor, visibility: buttonType == "Account" ? "initial" : "hidden" }}>{""}</Avatar>
+                        <Avatar sx={{ width: 16, height: 16, backgroundColor: badgeColor, visibility: buttonType == "Account" ? "initial" : "hidden", fontSize: '12px' }}>{newMessageCounter ? newMessageCounter : ''}</Avatar>
                     }
                 >
                     <Avatar src={image} sx={{ width: 36, height: 36 }}>

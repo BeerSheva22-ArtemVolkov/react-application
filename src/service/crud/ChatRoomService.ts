@@ -15,4 +15,5 @@ export default interface ChatRoom {
     updateGroup(chatGroup: ChatGroupType): Promise<any>
     deleteMessage(messageId: string): Promise<any>
     updateAccount(image: any): Promise<any>
+    getAllMessages(): Promise<any>
 }
