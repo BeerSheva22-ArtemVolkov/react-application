@@ -81,7 +81,7 @@ const Message: React.FC<Props> = ({ mes, deleteFn, handleToggleRefreshMessages }
                     }}
                 >
                     <Typography variant="body1">{message.text}</Typography>
-                    <Typography variant="overline">{new Date(mes.sendingDateTime).getHours()}:{new Date(mes.sendingDateTime).getMinutes()}</Typography>
+                    <Typography variant="overline">{new Date(mes.sendingDateTime).getHours()}:{new Date(mes.sendingDateTime).getMinutes().}</Typography>
                 </Paper>
             </Box>
         </Box>

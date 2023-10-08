@@ -1,5 +1,5 @@
 import { Close } from "@mui/icons-material"
-import { AppBar, Toolbar, IconButton, Typography, Button, Grid, TextField, FormControlLabel, Switch, List, ListItem, Checkbox, ListItemButton, ListItemAvatar, Avatar, ListItemText, ImageList, ImageListItem } from "@mui/material"
+import { AppBar, Toolbar, IconButton, Typography, Button, Grid, TextField, FormControlLabel, Switch, List, ListItem, Checkbox, ListItemButton, ListItemAvatar, Avatar, ListItemText, ImageList, ImageListItem, Tooltip } from "@mui/material"
 import ChatGroupType from "../../model/ChatGroupType"
 import { useState } from "react"
 import { useDispatchCode } from "../../hooks/hooks"
@@ -161,16 +161,20 @@ export const ChatGroupForm: React.FC<Props> = ({ initChatName = '', headerText, 
                                 sx={{ backgroundColor: initWaitings?.indexOf(account._id) !== -1 ? 'lightgray' : '' }}
                                 secondaryAction={
                                     <>
-                                        <Checkbox
-                                            edge="start"
-                                            onChange={handleSelectAdmin(account._id, 'admin')}
-                                            checked={createGroupAdmins.indexOf(account._id) !== -1}
-                                            inputProps={{ 'aria-labelledby': labelId }} />
-                                        <Checkbox
-                                            edge="start"
-                                            onChange={handleSelectAdmin(account._id, 'member')}
-                                            checked={createGroupMembers.indexOf(account._id) !== -1}
-                                            inputProps={{ 'aria-labelledby': labelId }} />
+                                        <Tooltip title="Admin">
+                                            <Checkbox
+                                                edge="start"
+                                                onChange={handleSelectAdmin(account._id, 'admin')}
+                                                checked={createGroupAdmins.indexOf(account._id) !== -1}
+                                                inputProps={{ 'aria-labelledby': labelId }} />
+                                        </Tooltip>
+                                        <Tooltip title="Member">
+                                            <Checkbox
+                                                edge="start"
+                                                onChange={handleSelectAdmin(account._id, 'member')}
+                                                checked={createGroupMembers.indexOf(account._id) !== -1}
+                                                inputProps={{ 'aria-labelledby': labelId }} />
+                                        </Tooltip>
                                     </>
                                 }
                                 disablePadding
@@ -179,7 +183,7 @@ export const ChatGroupForm: React.FC<Props> = ({ initChatName = '', headerText, 
                                     <ListItemAvatar>
                                         <Avatar
                                             alt={`Avatar n°${account._id + 1}`}
-                                            src={`/static/images/avatar/${account._id + 1}.jpg`}
+                                            src={account.image}
                                         />
                                     </ListItemAvatar>
                                     <ListItemText id={labelId} primary={account._id} />
